@@ -18,7 +18,7 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 - **Evaluation Metrics:** Assessing model performance using accuracy, precision, recall, confusion matrix, and ROC-AUC.
 
 ## Future Improvements
-- A major data component missing from this model is defender data, specifically defender location data. Intuitively, understanding who the closest defender is and how far away from the shot taker they are will greatky improve this model.
+- A major data component missing from this model is defender data, specifically defender location data. Intuitively, understanding who the closest defender is and how far away from the shot taker they are will greatly improve this model.
 - Incorporate real-time shot tracking data.
 - Improve model interpretability with SHAP values.
 - Experiment with advanced deep learning architectures.
