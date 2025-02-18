@@ -6,8 +6,9 @@ This project builds a machine learning model to predict whether an NBA shot will
 ## Data Sources
 The dataset consists of data from the **2021-2022 NBA season**, sourced from three different locations:
 1. **Shots Dataset** – Contains shot attempt details, including location, shot type, outcome, etc. (https://github.com/DomSamangy/NBA_Shots_04_24/blob/main/NBA_2022_Shots.csv.zip)
-2. **Player Dataset** – Includes player-specific attributes such as position, ppg, fg%, ortg, etc. (https://www.nbastuffer.com/2021-2022-nba-player-stats/)
-3. **Team Dataset** – Features team-level statistics, including pace, offensive rating, and defensive efficiency, etc. (https://www.nbastuffer.com/2021-2022-nba-team-stats/)
+2. **Player Dataset** – Includes player-specific attributes such as position, ppg, fg%, ortg, etc.
+(https://www.nbastuffer.com/2021-2022-nba-player-stats/)
+4. **Team Dataset** – Features team-level statistics, including pace, offensive rating, and defensive efficiency, etc. (https://www.nbastuffer.com/2021-2022-nba-team-stats/)
 
 ## Methodology
 - **Data Cleaning & Preprocessing:** Merging datasets, handling missing values, and feature engineering.
