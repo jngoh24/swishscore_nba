@@ -1,7 +1,7 @@
-# SwishScore - NBA Shot Outcome Prediction Model
+# SwishScore - NBA Shot Outcome Prediction Model (xP)
 
 ## Overview
-This project builds a machine learning model to predict whether an NBA shot will be made or missed. Inspired by the xG statistic in soccer, the model estimates shot probability using various features extracted from historical NBA data.
+This project builds a machine learning model to predict whether an NBA shot will be made or missed, thus in turn creating a new statistic, xP (expected points) per each shot. Inspired by the xG statistic in soccer, the model estimates shot probability using various features extracted from historical NBA data.
 
 ## Data Sources
 The dataset consists of data from the **2021-2022 NBA season**, sourced from three different locations:
