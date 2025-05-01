@@ -21,7 +21,7 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 
 
 ## Insights
-- OKC, WAS, PHO, DAL, and BOS outperfromed their xP most frequently, all above 71%
+- OKC, WAS, PHO, DAL, BOS outperfromed their xP most frequently, all above 71%
 - ORL, TOR, CHI, NYK, DET underperformed their xP most frequently, all above 52%
   
 
