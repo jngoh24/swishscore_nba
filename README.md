@@ -17,7 +17,7 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 - **Model Selection:** Implementing and comparing multiple machine learning models (e.g., logistic regression, random forests, and deep learning models).
 - **Evaluation Metrics:** Assessing model performance using accuracy, precision, recall, confusion matrix, and ROC-AUC.
 - **xP Creation:** Using the model's propability of a made shot, xP is the product of shot_pts (2 or 3) multiplied by xP.
-- **xP Evaluation:** Evaluated each team and their performance in regards to xP - whether the **Outperformed** (scored *more* points and expected) or **Underperformed** (scored less points than expected)
+- **xP Evaluation:** Evaluated each team and their performance in regards to xP - whether they **Outperformed** (scored *more* points than expected) or **Underperformed** (scored less points than expected)
 
 
 ## Insights
