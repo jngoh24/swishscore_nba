@@ -11,11 +11,11 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 4. **Team Dataset** – Features team-level statistics, including pace, offensive rating, and defensive efficiency, etc. (https://www.nbastuffer.com/2021-2022-nba-team-stats/)
 
 ## Methodology
-- # swish_eda
+- #### swish_eda
   - **Data Cleaning & Preprocessing:** Merging datasets, handling missing values, and feature engineering.
   - **Feature Engineering:** Creating relevant shot prediction features (e.g., in game fg%, last shot outcome, etc.).
   - **Exploratory Data Analysis:** Analyzing distributions, correlations, and key insights from the data to to select relevant features.
-- # xP_model
+- #### xP_model
   - **Model Selection:** Implementing and comparing multiple machine learning models (e.g., logistic regression, random forests, and deep      learning models).
   - **Evaluation Metrics:** Assessing model performance using accuracy, precision, recall, confusion matrix, and ROC-AUC.
   - **xP Creation:** Using the model's propability of a made shot, xP is the product of shot_pts (2 or 3) multiplied by xP.
