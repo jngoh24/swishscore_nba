@@ -16,6 +16,15 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 - **Exploratory Data Analysis:** Analyzing distributions, correlations, and key insights from the data to to select relevant features.
 - **Model Selection:** Implementing and comparing multiple machine learning models (e.g., logistic regression, random forests, and deep learning models).
 - **Evaluation Metrics:** Assessing model performance using accuracy, precision, recall, confusion matrix, and ROC-AUC.
+- **xP Creation:** Using the propability of a made shot, xP is the product of shot_pts (2 or 3) multiplied by xP.
+- **xP Evaluation:** Evaluated each team and their performance in regards to xP - whether the **Outperformed** (scored *more* points and expected) or **Underperformed** (scored less points than expected)
+
+
+## Insights
+- A major data component missing from this model is defender data, specifically defender location data. Intuitively, understanding who the closest defender is and how far away from the shot taker they are will greatly improve this model.
+- Incorporate real-time shot tracking data.
+- Improve model interpretability with SHAP values.
+- Experiment with advanced deep learning architectures.
 
 ## Future Improvements
 - A major data component missing from this model is defender data, specifically defender location data. Intuitively, understanding who the closest defender is and how far away from the shot taker they are will greatly improve this model.
