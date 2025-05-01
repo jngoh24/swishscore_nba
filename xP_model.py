@@ -17,7 +17,7 @@ from pyspark.sql import Window
 
 # COMMAND ----------
 
-teams = spark.read.csv("dbfs:/mnt/cinqai_outputs/jn_adhoc/lead_scoring/data/nba_data/team_data/21.22_teamdata.csv", header=True, inferSchema=True)
+teams = spark.read.csv("21.22_teamdata.csv", header=True, inferSchema=True)
 
 teams = teams.withColumn("TEAM_ABBRV", upper(teams["TEAM_ABBRV"]))
 
@@ -29,7 +29,7 @@ teams_join = teams_join.withColumnRenamed("TEAM_ABBRV", "TEAM_DEF")
 
 # COMMAND ----------
 
-players_original = spark.read.csv("dbfs:/mnt/cinqai_outputs/jn_adhoc/lead_scoring/data/nba_data/player_data/21.22_playerdata.csv", header=True, inferSchema=True)
+players_original = spark.read.csv("21.22_playerdata.csv", header=True, inferSchema=True)
 
 players = players_original.withColumn("Team", upper(players_original["TEAM"]))
 
@@ -47,7 +47,7 @@ players_join = players_norm.select("FULL NAME", "TEAM", "POS", "GP", "MPG", "PPG
 
 # COMMAND ----------
 
-shots = spark.read.csv("dbfs:/mnt/cinqai_outputs/jn_adhoc/lead_scoring/data/nba_data/game_data/21.22_shotsdata.csv", header=True, inferSchema=True)
+shots = spark.read.csv("21.22_shotsdata.csv", header=True, inferSchema=True)
 
 # Split the column by space
 split_col = split(col("TEAM_NAME"), " ")
