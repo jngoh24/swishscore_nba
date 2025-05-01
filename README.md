@@ -21,10 +21,9 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 
 
 ## Insights
-- A major data component missing from this model is defender data, specifically defender location data. Intuitively, understanding who the closest defender is and how far away from the shot taker they are will greatly improve this model.
-- Incorporate real-time shot tracking data.
-- Improve model interpretability with SHAP values.
-- Experiment with advanced deep learning architectures.
+- OKC, WAS, PHO, DAL, and BOS outperfromed their xP most frequently, all above 71%
+- ORL, TOR, CHI, NYK, DET underperformed their xP most frequently, all above 52%
+  
 
 ## Future Improvements
 - A major data component missing from this model is defender data, specifically defender location data. Intuitively, understanding who the closest defender is and how far away from the shot taker they are will greatly improve this model.
