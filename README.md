@@ -12,9 +12,9 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 
 ## Methodology
 
-### My NBA Data Explorer
+#### My NBA Data Explorer Streamlit App
 Check out the live Streamlit app here:  
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://[your-streamlit-cloud-app-url](https://swishscorenba-kwlmtqwpoajxu4rqqpcvzu.streamlit.app/))
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://swishscorenba-kwlmtqwpoajxu4rqqpcvzu.streamlit.app/)
 
 #### swish_eda
   - **Data Cleaning & Preprocessing:** Merging datasets, handling missing values, and feature engineering.
