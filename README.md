@@ -11,6 +11,11 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 4. **Team Dataset** – Features team-level statistics, including pace, offensive rating, and defensive efficiency, etc. (https://www.nbastuffer.com/2021-2022-nba-team-stats/)
 
 ## Methodology
+
+### My NBA Data Explorer
+Check out the live Streamlit app here:  
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://[your-streamlit-cloud-app-url](https://swishscorenba-kwlmtqwpoajxu4rqqpcvzu.streamlit.app/))
+
 #### swish_eda
   - **Data Cleaning & Preprocessing:** Merging datasets, handling missing values, and feature engineering.
   - **Feature Engineering:** Creating relevant shot prediction features (e.g., in game fg%, last shot outcome, etc.).
@@ -20,7 +25,6 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
   - **xP Creation:** Using the model's propability of a made shot, xP is the product of shot_pts (2 or 3) multiplied by xP.
   - **xP Evaluation:** Evaluated each team and their performance in regards to xP - whether they **Outperformed** (scored *more* points than   expected) or **Underperformed** (scored less points than expected)
   - **Evaluation Metrics:** Assessing model performance using accuracy, precision, recall, confusion matrix, and ROC-AUC.
-
 
 
 ## Insights
