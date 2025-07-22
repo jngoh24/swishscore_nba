@@ -13,8 +13,8 @@ url2 = "https://drive.google.com/uc?export=download&id=11_iTfCLqvOjnR_OmDQnGZMu1
 shots = load_data(url1)
 df = load_data(url2)
 
-teams = pd.read_csv("data/team_data.csv")
-players_original = pd.read_csv("data/player_data.csv")
+teams = pd.read_csv("streamlit/data/team_data.csv")
+players_original = pd.read_csv("streamlit/data/player_data.csv")
 players_original['Team'] = players_original['TEAM'].str.upper()
 players = players_original.dropna()
 players_filtered = players[players["GP"] >= 50]
