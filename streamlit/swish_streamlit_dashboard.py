@@ -13,6 +13,7 @@ url2 = "https://drive.google.com/uc?export=download&id=11_iTfCLqvOjnR_OmDQnGZMu1
 shots = load_data(url1)
 df = load_data(url2)
 
+master_xp = pd.read_csv("streamlit/data/master_xp.csv")
 teams = pd.read_csv("streamlit/data/team_data.csv")
 players_original = pd.read_csv("streamlit/data/player_data.csv")
 players_original['Team'] = players_original['TEAM'].str.upper()
@@ -21,7 +22,7 @@ players_filtered = players[players["GP"] >= 50]
 
 st.title("2021/2022 NBA Data Explorer")
 
-# Utility function
+# Utility Functions
 def make_bar_chart(df, category_col, count_col, title):
     fig = px.bar(
         df.sort_values(by=count_col, ascending=False),
@@ -74,13 +75,18 @@ def agg_and_plot(df, group_col, title, top_n=10):
     counts = counts.head(top_n)
     st.plotly_chart(make_bar_chart(counts, group_col, "count", title))
 
-def plot_bar(df, x_col, y_col, title, ascending=False):
+
+def plot_bar(df, x_col, y_col, title, ascending=False, percent_labels=False):
     df_sorted = df.sort_values(by=y_col, ascending=ascending)
+
+    # Only apply "%" suffix if specified
+    text_values = df_sorted[y_col].astype(str) + "%" if percent_labels else df_sorted[y_col]
+
     fig = px.bar(
         df_sorted,
         x=x_col,
         y=y_col,
-        text=y_col,
+        text=text_values,
         title=title,
         color=y_col,
         color_continuous_scale='blues'
@@ -96,11 +102,106 @@ def plot_bar(df, x_col, y_col, title, ascending=False):
     )
     st.plotly_chart(fig)
 
+# ---------------------------
 # Create tabs
-tabs = st.tabs(["📊 Shooting Stats", "🏀 Team Stats", "👤 Player Stats"])
+tabs = st.tabs(["📈 xP Performance Summary", "📊 Shooting Stats", "🏀 Team Stats", "👤 Player Stats"])
+
+# Tab 0: xP Performance Summary
+with tabs[0]:
+    st.title("📈 xP Performance Summary")
+
+    with st.expander("🔍 Filter Options", expanded=False):
+        unique_teams = sorted(master_xp["TEAM_ABBRV"].unique())
+        unique_confs = sorted(master_xp["CONF"].unique())
+        unique_divs = sorted(master_xp["DIVISION"].unique())
+
+        # Store defaults
+        if "default_teams" not in st.session_state:
+            st.session_state.default_teams = unique_teams
+        if "default_confs" not in st.session_state:
+            st.session_state.default_confs = unique_confs
+        if "default_divs" not in st.session_state:
+            st.session_state.default_divs = unique_divs
+
+        # Handle reset before widget creation
+        if "filters_reset" not in st.session_state:
+            st.session_state.filters_reset = False
+
+        if st.session_state.filters_reset:
+            # Set values before rendering widgets
+            st.session_state["team_filter"] = st.session_state.default_teams
+            st.session_state["conf_filter"] = st.session_state.default_confs
+            st.session_state["div_filter"] = st.session_state.default_divs
+            st.session_state.filters_reset = False  # prevent infinite rerun loop
+            st.rerun()  # rerun with updated state
+
+        # Create widgets with state values
+        selected_teams = st.multiselect("Team", unique_teams, default=st.session_state.get("team_filter", unique_teams),
+                                        key="team_filter")
+        selected_confs = st.multiselect("Conference", unique_confs,
+                                        default=st.session_state.get("conf_filter", unique_confs), key="conf_filter")
+        selected_divs = st.multiselect("Division", unique_divs, default=st.session_state.get("div_filter", unique_divs),
+                                       key="div_filter")
+
+        if st.button("🔄 Reset Filters"):
+            st.session_state.filters_reset = True
+            st.rerun()
+
+    # ===== TEAM-LEVEL ANALYSIS =====
+    filtered_xp = master_xp[
+        master_xp["TEAM_ABBRV"].isin(selected_teams) &
+        master_xp["CONF"].isin(selected_confs) &
+        master_xp["DIVISION"].isin(selected_divs)
+        ]
+
+    team_game_summary = filtered_xp.groupby(["GAME_ID", "TEAM_ABBRV"]).agg(
+        total_xP=("xP", "sum"),
+        total_pts=("pts", "sum")
+    ).reset_index()
+
+    team_game_summary["xP_performance"] = team_game_summary["total_pts"] > team_game_summary["total_xP"]
+    team_game_summary["xP_performance"] = team_game_summary["xP_performance"].map({True: "yes", False: "no"})
+
+    team_perf = team_game_summary.groupby("TEAM_ABBRV")["xP_performance"].value_counts().unstack().fillna(0)
+    team_perf = team_perf.rename(columns={"yes": "outperform", "no": "underperform"}).reset_index()
+    team_perf["total_games"] = team_perf["outperform"] + team_perf["underperform"]
+    team_perf["outperform_pct"] = round((team_perf["outperform"] / team_perf["total_games"]) * 100)
+    team_perf["underperform_pct"] = round((team_perf["underperform"] / team_perf["total_games"]) * 100)
+
+    top_outperform_teams = team_perf.sort_values("outperform_pct", ascending=False).head(5)
+    top_underperform_teams = team_perf.sort_values("underperform_pct", ascending=False).head(5)
+
+    # ===== PLAYER-LEVEL ANALYSIS =====
+    player_game_summary = filtered_xp.groupby(["GAME_ID", "FULL NAME"]).agg(
+        total_xP=("xP", "sum"),
+        total_pts=("pts", "sum")
+    ).reset_index()
+
+    player_game_summary["xP_performance"] = player_game_summary["total_pts"] > player_game_summary["total_xP"]
+    player_game_summary["xP_performance"] = player_game_summary["xP_performance"].map({True: "yes", False: "no"})
+
+    player_perf = player_game_summary.groupby("FULL NAME")["xP_performance"].value_counts().unstack().fillna(0)
+    player_perf = player_perf.rename(columns={"yes": "outperform", "no": "underperform"}).reset_index()
+    player_perf["total_games"] = player_perf["outperform"] + player_perf["underperform"]
+    player_perf = player_perf[player_perf["total_games"] >= 10]  # Optional: Filter out low-sample players
+    player_perf["outperform_pct"] = round((player_perf["outperform"] / player_perf["total_games"]) * 100)
+    player_perf["underperform_pct"] = round((player_perf["underperform"] / player_perf["total_games"]) * 100)
+
+    top_outperform_players = player_perf.sort_values("outperform_pct", ascending=False).head(5)
+    top_underperform_players = player_perf.sort_values("underperform_pct", ascending=False).head(5)
+
+    plot_bar(top_outperform_teams, "TEAM_ABBRV", "outperform_pct", "Teams: xP Outperformance %", percent_labels=True)
+
+    plot_bar(top_outperform_players, "FULL NAME", "outperform_pct", "Players: xP Outperformance %", percent_labels=True)
+
+    plot_bar(top_underperform_teams, "TEAM_ABBRV", "outperform_pct", "Teams: xP Underperformance %", ascending=True,
+             percent_labels=True)
+
+    plot_bar(top_underperform_players, "FULL NAME", "outperform_pct", "Players: xP Underperformance %",
+             ascending=True, percent_labels=True)
 
 # Tab 1: Shooting Stats
-with tabs[0]:
+with tabs[1]:
     make_pie_chart(df, "EVENT_TYPE", "Shot Outcomes (event_type)")
     agg_and_plot(shots, "ACTION_TYPE", "Top 10 Shot Actions")
     agg_and_plot(shots, "ZONE_NAME", "Shot Distribution by Zone Name")
@@ -109,7 +210,7 @@ with tabs[0]:
     agg_and_plot(shots, "QUARTER", "Shots Per Quarter")
 
 # Tab 2: Team Stats
-with tabs[1]:
+with tabs[2]:
     top_10_shot_teams = shots['TEAM_NAME'].value_counts().head(10).reset_index()
     top_10_shot_teams.columns = ['TEAM_NAME', 'count']
 
@@ -129,7 +230,7 @@ with tabs[1]:
     plot_bar(bottom10_dEFF, "TEAM", "dEFF", "Bottom 10 Teams by Defensive Efficiency", ascending=False)
 
 # Tab 3: Player Stats
-with tabs[2]:
+with tabs[3]:
     st.markdown("###### Includes players who played 50+ games this season")
 
     top_10_shot_takers_df = df["PLAYER_NAME"].value_counts().head(10).reset_index()
