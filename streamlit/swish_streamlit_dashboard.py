@@ -20,7 +20,7 @@ players_original['Team'] = players_original['TEAM'].str.upper()
 players = players_original.dropna()
 players_filtered = players[players["GP"] >= 50]
 
-st.title("SwishScore - NBA Shot Outcome Prediction Model (xP)")
+st.title("SwishScore - NBA Shot Outcome Prediction Model (xP) (https://github.com/jngoh24/swishscore_nba)")
 
 # Utility Functions
 def make_bar_chart(df, category_col, count_col, title):
