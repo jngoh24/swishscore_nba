@@ -1,5 +1,9 @@
 # SwishScore - NBA Shot Outcome Prediction Model (xP)
 
+### SwishScore Streamlit App
+Check out the live Streamlit app here:  
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://swishscorenba-kwlmtqwpoajxu4rqqpcvzu.streamlit.app/)
+
 ## Overview
 This project builds a machine learning model to predict whether an NBA shot will be made or missed. Based on this prediction, it calculates a new statistic called "Expected Points" (xP) for each shot. Inspired by the xG statistic in soccer, the model uses various features extracted from historical NBA data to predict the likelihood of a successful shot.
 
@@ -11,10 +15,6 @@ The dataset consists of data from the **2021-2022 NBA season**, sourced from thr
 4. **Team Dataset** – Features team-level statistics, including pace, offensive rating, and defensive efficiency, etc. (https://www.nbastuffer.com/2021-2022-nba-team-stats/)
 
 ## Methodology
-
-#### My NBA Data Explorer Streamlit App
-Check out the live Streamlit app here:  
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://swishscorenba-kwlmtqwpoajxu4rqqpcvzu.streamlit.app/)
 
 #### swish_eda
   - **Data Cleaning & Preprocessing:** Merging datasets, handling missing values, and feature engineering.
