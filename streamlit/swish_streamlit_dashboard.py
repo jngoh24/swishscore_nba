@@ -29,7 +29,7 @@ html, body,
 [data-testid="stHeader"]              { background: #161820 !important; border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
 [data-testid="stToolbar"]             { background: #161820 !important; }
 section[data-testid="stSidebar"]      { display: none !important; }
-.block-container                      { padding: 0 2rem 2rem !important; max-width: 100% !important; }
+.block-container                      { padding: 1.5rem 2rem 2rem !important; max-width: 100% !important; }
 
 /* Tabs */
 [data-testid="stTabs"] [role="tablist"] {
@@ -297,15 +297,14 @@ def zone_badge_grid(df_in, col, title, color):
 # HEADER
 # ═══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
-<div style="background:#161820;margin:-0px -2rem 0;padding:14px 2rem;
-            border-bottom:1px solid rgba(255,255,255,0.07);
-            display:flex;align-items:center;justify-content:space-between;">
+<div style="display:flex;align-items:center;justify-content:space-between;
+            padding:8px 0 24px;">
   <div style="display:flex;align-items:center;gap:12px;">
-    <div style="width:32px;height:32px;border-radius:50%;background:#e87c2a;
+    <div style="width:34px;height:34px;border-radius:50%;background:#e87c2a;
                 display:flex;align-items:center;justify-content:center;
-                font-weight:700;font-size:14px;color:#fff;flex-shrink:0;">S</div>
+                font-weight:700;font-size:15px;color:#fff;flex-shrink:0;">S</div>
     <div>
-      <div style="font-size:16px;font-weight:600;color:#f0f0f0;letter-spacing:-0.3px;
+      <div style="font-size:17px;font-weight:600;color:#f0f0f0;letter-spacing:-0.4px;
                   font-family:'DM Sans',sans-serif;line-height:1.2;">SwishScore</div>
       <div style="font-size:11px;color:#5a5a6a;font-family:'DM Sans',sans-serif;">
         NBA Shot Outcome Prediction &nbsp;·&nbsp; xP Model
@@ -319,7 +318,6 @@ st.markdown("""
     github.com/jngoh24/swishscore_nba
   </a>
 </div>
-<div style="height:24px;"></div>
 """, unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════════
