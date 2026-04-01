@@ -4,6 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit.components.v1 as components
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -165,15 +166,21 @@ def progress_bars(data, name_col, val_col, color):
 def xp_card(title, tag_text, tag_color, data, name_col, val_col, bar_color):
     inner = progress_bars(data, name_col, val_col, bar_color)
     return f"""
+    <html><head>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>*{{margin:0;padding:0;box-sizing:border-box;}}</style>
+    </head>
+    <body style="background:#1a1c24;margin:0;padding:0;">
     <div style="background:#1a1c24;border:1px solid rgba(255,255,255,0.07);
-                border-radius:10px;padding:20px;height:100%;">
+                border-radius:10px;padding:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <span style="font-size:13px;font-weight:500;color:#f0f0f0;">{title}</span>
+        <span style="font-size:13px;font-weight:500;color:#f0f0f0;font-family:'DM Sans',sans-serif;">{title}</span>
         <span style="font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500;
-                     background:{tag_color[0]};color:{tag_color[1]};">{tag_text}</span>
+                     background:{tag_color[0]};color:{tag_color[1]};font-family:'DM Sans',sans-serif;">{tag_text}</span>
       </div>
       {inner}
-    </div>"""
+    </div>
+    </body></html>"""
 
 def section(label):
     st.markdown(f"<h3>{label}</h3>", unsafe_allow_html=True)
@@ -288,34 +295,34 @@ with tab0:
     # Progress-bar cards like the mock
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(xp_card(
+        components.html(xp_card(
             "Teams · xP Outperformance %",
             "Top 5", ("rgba(34,197,94,0.12)", "#22c55e"),
             top_out_t, "TEAM_ABBRV", "outperform_pct", "#22c55e"
-        ), unsafe_allow_html=True)
+        ), height=220)
     with c2:
-        st.markdown(xp_card(
+        components.html(xp_card(
             "Teams · xP Underperformance %",
             "Bottom 5", ("rgba(239,68,68,0.12)", "#ef4444"),
             top_und_t, "TEAM_ABBRV", "underperform_pct", "#ef4444"
-        ), unsafe_allow_html=True)
+        ), height=220)
 
     st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
     section("Player xP Performance")
 
     c3, c4 = st.columns(2)
     with c3:
-        st.markdown(xp_card(
+        components.html(xp_card(
             "Players · xP Outperformance %",
             "Min 10 games", ("rgba(34,197,94,0.12)", "#22c55e"),
             top_out_p, "FULL NAME", "outperform_pct", "#22c55e"
-        ), unsafe_allow_html=True)
+        ), height=220)
     with c4:
-        st.markdown(xp_card(
+        components.html(xp_card(
             "Players · xP Underperformance %",
             "Min 10 games", ("rgba(239,68,68,0.12)", "#ef4444"),
             top_und_p, "FULL NAME", "underperform_pct", "#ef4444"
-        ), unsafe_allow_html=True)
+        ), height=220)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1 · SHOOTING STATS
