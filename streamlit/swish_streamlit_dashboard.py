@@ -115,15 +115,16 @@ DATA_DIR = "streamlit/data"
 os.makedirs(DATA_DIR, exist_ok=True)
 
 DRIVE_FILES = {
-    "shots.csv": "1TjmaUe1fTPNNtB1STGMq9af0JntkvCM0",
-    "df.csv":    "11_iTfCLqvOjnR_OmDQnGZMu1-_0WnhQV",
+    "shots.csv": "10pqJEeSlc-s3bZEmXahrhspZ3-cOSxKh",
+    "df.csv":    "18O8FUhCdcG8Jbr2oyhQGxSigzk9R6Dx6",
 }
 
 @st.cache_data(show_spinner=False)
 def load_drive_csv(file_id: str, filename: str) -> pd.DataFrame:
     path = os.path.join(DATA_DIR, filename)
     if not os.path.exists(path):
-        gdown.download(id=file_id, output=path, quiet=False, fuzzy=True)
+        url = f"https://drive.google.com/uc?id={file_id}&export=download&confirm=t"
+        gdown.download(url=url, output=path, quiet=False, fuzzy=True, use_cookies=False)
     return pd.read_csv(path)
 
 @st.cache_data(show_spinner=False)
