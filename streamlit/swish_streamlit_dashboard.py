@@ -83,17 +83,7 @@ section[data-testid="stSidebar"]      { display: none !important; }
     font-family: 'DM Sans', sans-serif !important;
 }
 
-/* Expander */
-[data-testid="stExpander"] {
-    background: #1a1c24 !important;
-    border: 1px solid rgba(255,255,255,0.07) !important;
-    border-radius: 10px !important;
-    margin-bottom: 20px !important;
-}
-[data-testid="stExpander"] summary {
-    color: #9a9aaa !important;
-    font-size: 12px !important;
-}
+/* Expander handled below */
 
 /* Info box */
 [data-testid="stInfo"] {
@@ -120,8 +110,42 @@ h2 { color: #f0f0f0 !important; font-size: 16px !important; font-weight: 500 !im
 h3 { color: #5a5a6a !important; font-size: 10px !important; font-weight: 600 !important;
      letter-spacing: 1.2px !important; text-transform: uppercase !important; margin: 18px 0 12px !important; }
 
-/* iframe cards — remove default border/shadow */
+/* iframe cards — no border */
 iframe { border: none !important; }
+
+/* Hide deploy button and hamburger */
+[data-testid="stToolbarActions"] { display: none !important; }
+#MainMenu { display: none !important; }
+footer { display: none !important; }
+
+/* Fix expander — ensure it has solid background so nothing bleeds through */
+[data-testid="stExpander"] {
+    background: #1a1c24 !important;
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+[data-testid="stExpander"] > div:first-child {
+    background: #1a1c24 !important;
+}
+details[data-testid="stExpander"] summary {
+    background: #1a1c24 !important;
+    padding: 12px 16px !important;
+}
+
+/* Streamlit native topbar — style it as our header */
+[data-testid="stHeader"] {
+    background: #161820 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+    height: 52px !important;
+}
+
+/* Block container — give clean top padding below the tabs */
+.block-container {
+    padding-top: 2rem !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -296,13 +320,21 @@ def zone_badge_grid(df_in, col, title, color):
 # ═══════════════════════════════════════════════════════════════════════════════
 # HEADER
 # ═══════════════════════════════════════════════════════════════════════════════
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TABS
+# ═══════════════════════════════════════════════════════════════════════════════
+# ── Inline header ─────────────────────────────────────────────────────────────
 st.markdown("""
 <div style="display:flex;align-items:center;justify-content:space-between;
-            padding:8px 0 24px;">
+            padding:0 0 20px 0;border-bottom:1px solid rgba(255,255,255,0.06);
+            margin-bottom:4px;">
   <div style="display:flex;align-items:center;gap:12px;">
     <div style="width:34px;height:34px;border-radius:50%;background:#e87c2a;
                 display:flex;align-items:center;justify-content:center;
-                font-weight:700;font-size:15px;color:#fff;flex-shrink:0;">S</div>
+                font-weight:700;font-size:15px;color:#fff;flex-shrink:0;
+                font-family:'DM Sans',sans-serif;">S</div>
     <div>
       <div style="font-size:17px;font-weight:600;color:#f0f0f0;letter-spacing:-0.4px;
                   font-family:'DM Sans',sans-serif;line-height:1.2;">SwishScore</div>
@@ -313,16 +345,13 @@ st.markdown("""
   </div>
   <a href="https://github.com/jngoh24/swishscore_nba"
      style="font-size:11px;color:#9a9aaa;text-decoration:none;
-            border:1px solid rgba(255,255,255,0.1);padding:4px 10px;
+            border:1px solid rgba(255,255,255,0.1);padding:5px 12px;
             border-radius:6px;font-family:'DM Sans',sans-serif;">
     github.com/jngoh24/swishscore_nba
   </a>
 </div>
 """, unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# TABS
-# ═══════════════════════════════════════════════════════════════════════════════
 tab0, tab1, tab2, tab3 = st.tabs([
     "📈  xP Performance",
     "📊  Shooting Stats",
