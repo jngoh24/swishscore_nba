@@ -322,8 +322,8 @@ with tab0:
 # ══════════════════════════════════════════════════════════════════════════════
 with tab1:
 
-    total_shots = len(df)
-    made   = (df["EVENT_TYPE"].str.lower().str.contains("made")).sum() if "EVENT_TYPE" in df.columns else 0
+    total_shots = len(shots)
+    made   = (shots["EVENT_TYPE"].str.lower().str.contains("made")).sum() if "EVENT_TYPE" in shots.columns else 0
     missed = total_shots - made
     fg_pct = round(made / total_shots * 100, 1) if total_shots else 0
 
@@ -338,7 +338,7 @@ with tab1:
 
     c1, c2 = st.columns(2)
     with c1:
-        oc = df["EVENT_TYPE"].value_counts().reset_index()
+        oc = shots["EVENT_TYPE"].value_counts().reset_index()
         oc.columns = ["EVENT_TYPE","count"]
         st.plotly_chart(pie(oc, "EVENT_TYPE", "count", "Shot outcomes"), use_container_width=True)
     with c2:
@@ -417,7 +417,7 @@ with tab3:
 
     st.info("Showing players with 50+ games played this season")
 
-    top10_shot_takers = df["PLAYER_NAME"].value_counts().head(10).reset_index()
+    top10_shot_takers = shots["PLAYER_NAME"].value_counts().head(10).reset_index()
     top10_shot_takers.columns = ["PLAYER_NAME","Shot Attempts"]
 
     stat_cols = [
