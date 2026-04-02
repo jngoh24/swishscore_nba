@@ -4,7 +4,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import streamlit.components.v1 as components
+
 
 st.set_page_config(
     page_title="SwishScore · NBA xP Model",
@@ -211,7 +211,11 @@ def donut(df_in, names, values, title, height=340):
         marker=dict(line=dict(color="#0e0f13", width=2)),
         textfont=dict(size=11, color="#f0f0f0"),
     )
-    fig.update_layout(**{**BASE, "margin": dict(l=12,r=12,t=44,b=12)}, title=title, showlegend=True,
+    base_no_legend = {k: v for k, v in BASE.items() if k != "showlegend"}
+    fig.update_layout(**base_no_legend,
+                      margin=dict(l=12, r=12, t=44, b=12),
+                      title=title,
+                      showlegend=True,
                       legend=dict(font=dict(color="#9a9aaa", size=10),
                                   bgcolor="rgba(0,0,0,0)", x=1, y=0.5))
     return fig
@@ -280,7 +284,7 @@ def xp_card(title, tag_text, tag_bg, tag_fg, data, name_col, val_col, bar_color,
       </div>
       {rows}
     </body></html>"""
-    components.html(html, height=height, scrolling=False)
+    st.html(html)
 
 # ── Zone badge grid ────────────────────────────────────────────────────────────
 def zone_grid(df_in, col):
@@ -314,7 +318,7 @@ def zone_grid(df_in, col):
     </style></head><body>
     <div class="g">{cards}</div>
     </body></html>"""
-    components.html(html, height=n_rows * 115 + 16, scrolling=False)
+    st.html(html)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # HEADER
@@ -463,7 +467,7 @@ with tab0:
     st.plotly_chart(
         scatter(team_scatter, "avg_xP", "avg_pts", "TEAM_ABBRV",
                 "Avg actual pts vs avg xP per team (above diagonal = outperforming)", height=440),
-        use_container_width=True)
+        width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 1 · SHOOTING STATS
@@ -490,12 +494,12 @@ with tab1:
             oc = shots["EVENT_TYPE"].value_counts().reset_index()
             oc.columns = ["EVENT_TYPE","count"]
             st.plotly_chart(donut(oc,"EVENT_TYPE","count","Shot outcomes — made vs missed"),
-                            use_container_width=True)
+                            width='stretch')
     with c2:
         if "QUARTER" in shots.columns:
             qd = agg_top(shots,"QUARTER",6)
             st.plotly_chart(vbar(qd,"QUARTER","count","Shots per quarter", color_scale="Blues", height=340),
-                            use_container_width=True)
+                            width='stretch')
 
     st.divider()
     section("Shot Action Types — top 10")
@@ -503,7 +507,7 @@ with tab1:
         act = agg_top(shots,"ACTION_TYPE",10)
         st.plotly_chart(hbar(act,"ACTION_TYPE","count","Top 10 shot action types",
                              color_scale="Oranges", height=420, ascending=True),
-                        use_container_width=True)
+                        width='stretch')
 
     st.divider()
     section("Zone Distribution")
@@ -517,13 +521,13 @@ with tab1:
             st.plotly_chart(hbar(agg_top(shots,"BASIC_ZONE",8),"BASIC_ZONE","count",
                                  "Shot distribution by basic zone",
                                  color_scale="Blues", height=340, ascending=True),
-                            use_container_width=True)
+                            width='stretch')
     with z2:
         if "ZONE_RANGE" in shots.columns:
             st.plotly_chart(lollipop(agg_top(shots,"ZONE_RANGE",8),"ZONE_RANGE","count",
                                      "Shot range distribution",
                                      color="#3b82f6", height=340),
-                            use_container_width=True)
+                            width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 2 · TEAM STATS
@@ -552,12 +556,12 @@ with tab2:
         st.plotly_chart(hbar(top10_shots,"TEAM_NAME","count",
                              "Top 10 shot volume teams",
                              color_scale="Blues", height=380, ascending=True),
-                        use_container_width=True)
+                        width='stretch')
     with c2:
         st.plotly_chart(lollipop(bot10_shots,"TEAM_NAME","count",
                                  "Bottom 10 shot volume teams",
                                  color="#ef4444", height=380, ascending=True),
-                        use_container_width=True)
+                        width='stretch')
 
     st.divider()
     section("Defensive Efficiency")
@@ -566,20 +570,20 @@ with tab2:
         st.plotly_chart(hbar(top10_oppg,"TEAM","oPPG",
                              "Best defensive oPPG (lower = better)",
                              color_scale="Greens", height=360, ascending=True),
-                        use_container_width=True)
+                        width='stretch')
         st.plotly_chart(hbar(bot10_oppg,"TEAM","oPPG",
                              "Worst defensive oPPG",
                              color_scale="Reds", height=360, ascending=False),
-                        use_container_width=True)
+                        width='stretch')
     with c4:
         st.plotly_chart(hbar(top10_deff,"TEAM","dEFF",
                              "Best defensive efficiency (dEFF)",
                              color_scale="Greens", height=360, ascending=True),
-                        use_container_width=True)
+                        width='stretch')
         st.plotly_chart(hbar(bot10_deff,"TEAM","dEFF",
                              "Worst defensive efficiency (dEFF)",
                              color_scale="Reds", height=360, ascending=False),
-                        use_container_width=True)
+                        width='stretch')
 
     # Scatter: oPPG vs dEFF
     st.divider()
@@ -588,7 +592,7 @@ with tab2:
     st.plotly_chart(scatter(all_teams,"oPPG","dEFF","TEAM",
                             "Team defensive profile — oPPG allowed vs defensive efficiency",
                             height=480),
-                    use_container_width=True)
+                    width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 3 · PLAYER STATS
@@ -621,7 +625,7 @@ with tab3:
     st.plotly_chart(hbar(shot_takers,"PLAYER_NAME","Shot Attempts",
                          "Top 10 shot takers this season",
                          color_scale="Oranges", height=380, ascending=True),
-                    use_container_width=True)
+                    width='stretch')
 
     st.divider()
     section("Shooting Efficiency")
@@ -631,7 +635,7 @@ with tab3:
         top30 = players_filtered.nlargest(30,"eFG%")
         st.plotly_chart(scatter(top30,"eFG%","TS%","FULL NAME",
                                 "eFG% vs TS% — top 30 players by eFG%", height=460),
-                        use_container_width=True)
+                        width='stretch')
 
     st.divider()
     c1, c2 = st.columns(2)
@@ -642,7 +646,7 @@ with tab3:
             st.plotly_chart(hbar(top_df,"FULL NAME",col,title,
                                  color_scale=scale, height=360,
                                  ascending=True, pct=("%" in col)),
-                            use_container_width=True)
+                            width='stretch')
 
 # ── Footer ─────────────────────────────────────────────────────────────────────
 st.markdown("""
