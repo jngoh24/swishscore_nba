@@ -380,11 +380,11 @@ st.markdown('<p class="kicker">Shot-level xP model measuring how often teams and
 st.divider()
 
 # ── Tabs ────────────────────────────────────────────────────────────────────────
-tab0, tab1, tab2, tab3 = st.tabs([
+tab0, tab_player, tab_shoot, tab_team = st.tabs([
     "📈  xP Performance",
+    "👤  Player Stats",
     "📊  Shooting Stats",
     "🏀  Team Stats",
-    "👤  Player Stats",
 ])
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -561,9 +561,9 @@ with tab0:
                         width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TAB 1 · SHOOTING STATS
+# TAB_TEMP_SHOOT · SHOOTING STATS
 # ═══════════════════════════════════════════════════════════════════════════════
-with tab1:
+with tab_shoot:
 
     total_shots = len(shots)
     made   = (shots["EVENT_TYPE"].str.lower().str.contains("made")).sum() if "EVENT_TYPE" in shots.columns else 0
@@ -638,9 +638,9 @@ with tab1:
                             width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TAB 2 · TEAM STATS
+# TAB_TEMP_TEAM · TEAM STATS
 # ═══════════════════════════════════════════════════════════════════════════════
-with tab2:
+with tab_team:
 
     top10_shots = shots["TEAM_NAME"].value_counts().head(10).reset_index()
     top10_shots.columns = ["TEAM_NAME","count"]
@@ -690,9 +690,9 @@ with tab2:
                                   height=480), width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# TAB 3 · PLAYER STATS
+# TAB_TEMP_PLAYER · PLAYER STATS
 # ═══════════════════════════════════════════════════════════════════════════════
-with tab3:
+with tab_player:
 
     st.markdown(
         '<p style="font-family:Inter;font-size:12px;color:#888;margin-bottom:16px;">'
