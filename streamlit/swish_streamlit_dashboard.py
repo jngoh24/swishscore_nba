@@ -22,10 +22,11 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main, .
     font-family: 'DM Sans', sans-serif !important;
     color: #f0f0f0 !important;
 }
-.block-container { padding: 2rem 2rem 4rem !important; max-width: 100% !important; }
+.block-container { padding: 3.5rem 2rem 4rem !important; max-width: 100% !important; }
 [data-testid="stHeader"] { background: #0e0f13 !important; border-bottom: none !important; }
-[data-testid="stToolbar"], [data-testid="stToolbarActions"],
-#MainMenu, footer, [data-testid="stDecoration"] { display: none !important; }
+[data-testid="stToolbarActions"], #MainMenu, footer,
+[data-testid="stDecoration"], [data-testid="stStatusWidget"] { display: none !important; }
+[data-testid="stToolbar"] { background: transparent !important; }
 section[data-testid="stSidebar"] { display: none !important; }
 
 [data-testid="stTabs"] [role="tablist"] {
@@ -211,13 +212,18 @@ def donut(df_in, names, values, title, height=340):
         marker=dict(line=dict(color="#0e0f13", width=2)),
         textfont=dict(size=11, color="#f0f0f0"),
     )
-    base_no_legend = {k: v for k, v in BASE.items() if k != "showlegend"}
-    fig.update_layout(**base_no_legend,
-                      margin=dict(l=12, r=12, t=44, b=12),
-                      title=title,
-                      showlegend=True,
-                      legend=dict(font=dict(color="#9a9aaa", size=10),
-                                  bgcolor="rgba(0,0,0,0)", x=1, y=0.5))
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="DM Sans", color="#9a9aaa", size=11),
+        title=dict(text=title, font=dict(size=13, color="#f0f0f0", family="DM Sans"), x=0),
+        margin=dict(l=12, r=12, t=44, b=12),
+        showlegend=True,
+        coloraxis_showscale=False,
+        legend=dict(font=dict(color="#9a9aaa", size=10),
+                    bgcolor="rgba(0,0,0,0)", x=1, y=0.5),
+        height=height,
+    )
     return fig
 
 # ── Grouped bar (for quarter data) ────────────────────────────────────────────
