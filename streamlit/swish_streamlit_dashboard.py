@@ -423,7 +423,10 @@ with tab0:
 
     tgs = fxp.groupby(["GAME_ID","TEAM_ABBRV"]).agg(
         total_xP=("xP","sum"), total_pts=("pts","sum")).reset_index()
-    tgs["over"] = (tgs["total_pts"] > tgs["total_xP"]).map({True:"yes",False:"no"})
+    tgs["over"]      = (tgs["total_pts"] > tgs["total_xP"]).map({True:"yes",False:"no"})
+    tgs["delta"]     = tgs["total_pts"] - tgs["total_xP"]
+    tgs["delta_pct"] = (tgs["delta"] / tgs["total_xP"].replace(0, float("nan")) * 100)
+
     tp = tgs.groupby("TEAM_ABBRV")["over"].value_counts().unstack(fill_value=0)
     tp = tp.rename(columns={"yes":"outperform","no":"underperform"}).reset_index()
     for c in ["outperform","underperform"]:
@@ -432,9 +435,21 @@ with tab0:
     tp["outperform_pct"]   = (tp["outperform"]   / tp["total"] * 100).round()
     tp["underperform_pct"] = (tp["underperform"] / tp["total"] * 100).round()
 
+    # Merge in avg delta metrics from tgs
+    tp_delta = tgs.groupby("TEAM_ABBRV").agg(
+        avg_delta=("delta","mean"),
+        avg_delta_pct=("delta_pct","mean")
+    ).reset_index()
+    tp_delta["avg_delta"]     = tp_delta["avg_delta"].round(1)
+    tp_delta["avg_delta_pct"] = tp_delta["avg_delta_pct"].round(1)
+    tp = tp.merge(tp_delta, on="TEAM_ABBRV", how="left")
+
     pgs = fxp.groupby(["GAME_ID","FULL NAME"]).agg(
         total_xP=("xP","sum"), total_pts=("pts","sum")).reset_index()
-    pgs["over"] = (pgs["total_pts"] > pgs["total_xP"]).map({True:"yes",False:"no"})
+    pgs["over"]      = (pgs["total_pts"] > pgs["total_xP"]).map({True:"yes",False:"no"})
+    pgs["delta"]     = pgs["total_pts"] - pgs["total_xP"]
+    pgs["delta_pct"] = (pgs["delta"] / pgs["total_xP"].replace(0, float("nan")) * 100)
+
     pp = pgs.groupby("FULL NAME")["over"].value_counts().unstack(fill_value=0)
     pp = pp.rename(columns={"yes":"outperform","no":"underperform"}).reset_index()
     for c in ["outperform","underperform"]:
@@ -444,16 +459,29 @@ with tab0:
     pp["outperform_pct"]   = (pp["outperform"]   / pp["total"] * 100).round()
     pp["underperform_pct"] = (pp["underperform"] / pp["total"] * 100).round()
 
+    # Merge in avg delta metrics
+    pp_delta = pgs.groupby("FULL NAME").agg(
+        avg_delta=("delta","mean"),
+        avg_delta_pct=("delta_pct","mean")
+    ).reset_index()
+    pp_delta["avg_delta"]     = pp_delta["avg_delta"].round(1)
+    pp_delta["avg_delta_pct"] = pp_delta["avg_delta_pct"].round(1)
+    pp = pp.merge(pp_delta, on="FULL NAME", how="left")
+
     top_out_t  = tp.sort_values("outperform_pct",   ascending=False).head(5)
     top_out_p  = pp.sort_values("outperform_pct",   ascending=False).head(5)
     top_und_t  = tp.sort_values("underperform_pct", ascending=False).head(5)
     top_und_p  = pp.sort_values("underperform_pct", ascending=False).head(5)
 
-    k1, k2, k3, k4 = st.columns(4)
+    k1, k2, k3, k4, k5, k6 = st.columns(6)
     k1.metric("Teams in view",         len(tp))
     k2.metric("Players (min 10 GP)",   len(pp))
     k3.metric("Avg outperform rate",   f"{tp['outperform_pct'].mean():.0f}%")
     k4.metric("Avg underperform rate", f"{tp['underperform_pct'].mean():.0f}%")
+    best_team_delta = tp.loc[tp["avg_delta"].idxmax()]
+    k5.metric("Best avg pts above xP", f"+{best_team_delta['avg_delta']:.1f}", best_team_delta["TEAM_ABBRV"])
+    best_player_delta = pp.loc[pp["avg_delta"].idxmax()]
+    k6.metric("Best player avg delta", f"+{best_player_delta['avg_delta']:.1f}", best_player_delta["FULL NAME"])
 
     st.divider()
     section("Team xP Performance")
@@ -479,15 +507,97 @@ with tab0:
                 "rgba(239,68,68,0.12)", "#ef4444",
                 top_und_p, "FULL NAME", "underperform_pct", "#ef4444")
 
-    # xP scatter: pts vs xP per team
+    # ── Avg delta charts ──────────────────────────────────────────────────────
     st.divider()
-    section("Actual Points vs xP by Team")
-    team_scatter = fxp.groupby("TEAM_ABBRV").agg(
-        avg_xP=("xP","mean"), avg_pts=("pts","mean")).reset_index()
-    st.plotly_chart(
-        scatter(team_scatter, "avg_xP", "avg_pts", "TEAM_ABBRV",
-                "Avg actual pts vs avg xP per team (above diagonal = outperforming)", height=440),
-        width='stretch')
+    section("Avg Points Above / Below xP per Game")
+    st.markdown("""<div style="font-size:12px;color:#5a5a6a;margin:-8px 0 16px;font-family:'DM Sans',sans-serif;">
+        Average (actual pts − xP) per game. Positive = consistently scores above shot quality.
+    </div>""", unsafe_allow_html=True)
+
+    top5_team_delta  = tp.nlargest(5,  "avg_delta")[["TEAM_ABBRV","avg_delta"]]
+    bot5_team_delta  = tp.nsmallest(5, "avg_delta")[["TEAM_ABBRV","avg_delta"]]
+    top5_player_delta = pp.nlargest(5,  "avg_delta")[["FULL NAME","avg_delta"]]
+    bot5_player_delta = pp.nsmallest(5, "avg_delta")[["FULL NAME","avg_delta"]]
+
+    d1, d2 = st.columns(2)
+    with d1:
+        st.plotly_chart(hbar(top5_team_delta, "TEAM_ABBRV", "avg_delta",
+                             "Teams · best avg pts above xP",
+                             color_scale="Greens", height=280, ascending=True),
+                        width='stretch')
+    with d2:
+        st.plotly_chart(hbar(top5_player_delta, "FULL NAME", "avg_delta",
+                             "Players · best avg pts above xP",
+                             color_scale="Greens", height=280, ascending=True),
+                        width='stretch')
+
+    d3, d4 = st.columns(2)
+    with d3:
+        st.plotly_chart(hbar(bot5_team_delta, "TEAM_ABBRV", "avg_delta",
+                             "Teams · worst avg pts below xP",
+                             color_scale="Reds", height=280, ascending=False),
+                        width='stretch')
+    with d4:
+        st.plotly_chart(hbar(bot5_player_delta, "FULL NAME", "avg_delta",
+                             "Players · worst avg pts below xP",
+                             color_scale="Reds", height=280, ascending=False),
+                        width='stretch')
+
+    # ── Avg delta % charts ─────────────────────────────────────────────────────
+    st.divider()
+    section("Avg xP Delta % per Game  (normalised by xP)")
+    st.markdown("""<div style="font-size:12px;color:#5a5a6a;margin:-8px 0 16px;font-family:'DM Sans',sans-serif;">
+        ((actual pts − xP) / xP) × 100. Accounts for different playing time / xP baselines.
+    </div>""", unsafe_allow_html=True)
+
+    top5_team_dpct   = tp.nlargest(5,  "avg_delta_pct")[["TEAM_ABBRV","avg_delta_pct"]]
+    bot5_team_dpct   = tp.nsmallest(5, "avg_delta_pct")[["TEAM_ABBRV","avg_delta_pct"]]
+    top5_player_dpct = pp.nlargest(5,  "avg_delta_pct")[["FULL NAME","avg_delta_pct"]]
+    bot5_player_dpct = pp.nsmallest(5, "avg_delta_pct")[["FULL NAME","avg_delta_pct"]]
+
+    e1, e2 = st.columns(2)
+    with e1:
+        st.plotly_chart(hbar(top5_team_dpct, "TEAM_ABBRV", "avg_delta_pct",
+                             "Teams · best avg xP delta %",
+                             color_scale="Greens", height=280, ascending=True, pct=True),
+                        width='stretch')
+    with e2:
+        st.plotly_chart(hbar(top5_player_dpct, "FULL NAME", "avg_delta_pct",
+                             "Players · best avg xP delta %",
+                             color_scale="Greens", height=280, ascending=True, pct=True),
+                        width='stretch')
+
+    e3, e4 = st.columns(2)
+    with e3:
+        st.plotly_chart(hbar(bot5_team_dpct, "TEAM_ABBRV", "avg_delta_pct",
+                             "Teams · worst avg xP delta %",
+                             color_scale="Reds", height=280, ascending=False, pct=True),
+                        width='stretch')
+    with e4:
+        st.plotly_chart(hbar(bot5_player_dpct, "FULL NAME", "avg_delta_pct",
+                             "Players · worst avg xP delta %",
+                             color_scale="Reds", height=280, ascending=False, pct=True),
+                        width='stretch')
+
+    # ── Scatter: outperform % vs avg delta ─────────────────────────────────────
+    st.divider()
+    section("Outperformance Rate vs Avg Points Above xP")
+    st.markdown("""<div style="font-size:12px;color:#5a5a6a;margin:-8px 0 16px;font-family:'DM Sans',sans-serif;">
+        Top-right = consistently wins games AND beats xP by a large margin. Most elite performers.
+    </div>""", unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.plotly_chart(
+            scatter(tp, "outperform_pct", "avg_delta", "TEAM_ABBRV",
+                    "Teams — outperformance % vs avg pts above xP", height=420),
+            width='stretch')
+    with c2:
+        top30p = pp.nlargest(30, "avg_delta")
+        st.plotly_chart(
+            scatter(top30p, "outperform_pct", "avg_delta", "FULL NAME",
+                    "Players (top 30) — outperformance % vs avg pts above xP", height=420),
+            width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 1 · SHOOTING STATS
