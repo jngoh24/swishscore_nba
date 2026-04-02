@@ -711,25 +711,37 @@ with tab_player:
     ]
     valid = [(c,l,col) for c,l,col in stat_cols if c in players_filtered.columns]
 
-    # KPI row
-    kpi_cols = st.columns(len(valid))
-    for (col, label, _), kc in zip(valid, kpi_cols):
-        best = players_filtered.loc[players_filtered[col].idxmax()]
-        suffix = "%" if "%" in col else ""
-        kc.metric(col, f"{best[col]:.1f}{suffix}", best["FULL NAME"])
-
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-    # ── Player cards ───────────────────────────────────────────────────────────
+    # ── Player selector (drives KPIs + cards) ────────────────────────────────
     st.divider()
     section("Player Cards")
-    st.markdown('<p class="kicker">Select a player to view their full shooting profile.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="kicker">Select a player to view their full shooting profile and see how they compare to league averages.</p>', unsafe_allow_html=True)
 
     player_search = st.selectbox(
         "Search player",
         options=sorted(players_filtered["FULL NAME"].dropna().unique()),
         key="player_card_selector"
     )
+
+    # ── KPI row — selected player's stats vs league avg ────────────────────────
+    league_avgs = {col: players_filtered[col].mean() for col, _, _ in valid}
+
+    sel_for_kpi = players_filtered[players_filtered["FULL NAME"] == player_search]
+    kpi_cols = st.columns(len(valid))
+    for (col, label, _), kc in zip(valid, kpi_cols):
+        if not sel_for_kpi.empty:
+            val      = sel_for_kpi.iloc[0][col]
+            lg_avg   = league_avgs[col]
+            delta    = val - lg_avg
+            suffix   = "%" if "%" in col else ""
+            # delta label: show vs league avg with arrow direction
+            delta_str = f"{delta:+.1f}{suffix} vs lg avg"
+            kc.metric(col, f"{val:.1f}{suffix}", delta_str)
+        else:
+            best   = players_filtered.loc[players_filtered[col].idxmax()]
+            suffix = "%" if "%" in col else ""
+            kc.metric(col, f"{best[col]:.1f}{suffix}", best["FULL NAME"])
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     sel_player = players_filtered[players_filtered["FULL NAME"] == player_search]
 
