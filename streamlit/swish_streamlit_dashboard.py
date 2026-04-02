@@ -5,94 +5,150 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-
+# ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="SwishScore · NBA xP Model",
     page_icon="🏀",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
+# ── CSS — matches HSR dashboard aesthetic ─────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
-html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"], .main, .block-container {
-    background-color: #0e0f13 !important;
-    font-family: 'DM Sans', sans-serif !important;
-    color: #f0f0f0 !important;
+html, body, [class*="css"] {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #1a1a1a;
 }
-.block-container { padding: 3.5rem 2rem 4rem !important; max-width: 100% !important; }
-[data-testid="stHeader"] { background: #0e0f13 !important; border-bottom: none !important; }
-[data-testid="stToolbarActions"], #MainMenu, footer,
-[data-testid="stDecoration"], [data-testid="stStatusWidget"] { display: none !important; }
-[data-testid="stToolbar"] { background: transparent !important; }
-section[data-testid="stSidebar"] { display: none !important; }
+.stApp { background-color: #f7f7f5; }
 
-[data-testid="stTabs"] [role="tablist"] {
-    background: #161820 !important;
-    border-radius: 0 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.07) !important;
-    padding: 0 8px !important; gap: 2px !important;
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #e5e5e3;
 }
-[data-testid="stTabs"] [role="tab"] {
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 12px !important; font-weight: 500 !important;
-    color: #9a9aaa !important; padding: 14px 18px 12px !important;
-    border-radius: 0 !important;
-    border-bottom: 2px solid transparent !important;
-    background: transparent !important;
-}
-[data-testid="stTabs"] [role="tab"][aria-selected="true"] {
-    color: #e87c2a !important;
-    border-bottom: 2px solid #e87c2a !important;
-}
-[data-testid="stTabContent"] { background: #0e0f13 !important; padding-top: 28px !important; }
+section[data-testid="stSidebar"] * { color: #1a1a1a !important; }
 
-[data-testid="stMetric"] {
-    background: #1a1c24 !important;
-    border: 1px solid rgba(255,255,255,0.07) !important;
-    border-radius: 10px !important; padding: 16px 18px !important;
+/* Headers */
+h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-weight: 600; font-size: 28px; color: #111111;
+    letter-spacing: -0.01em; line-height: 1.2;
 }
-[data-testid="stMetricLabel"] p { color: #9a9aaa !important; font-size: 11px !important; letter-spacing: 0.3px !important; }
-[data-testid="stMetricValue"]   { color: #f0f0f0 !important; font-size: 24px !important; font-weight: 600 !important; letter-spacing: -0.5px !important; }
-[data-testid="stMetricDelta"]   { font-size: 11px !important; }
-
-[data-testid="stInfo"] {
-    background: rgba(59,130,246,0.08) !important;
-    border: 1px solid rgba(59,130,246,0.2) !important;
-    border-radius: 6px !important; padding: 8px 12px !important;
+h2, h3, h4 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600; color: #111111; letter-spacing: -0.01em;
 }
-[data-testid="stInfo"] p { color: #9a9aaa !important; font-size: 11px !important; }
+h3 { font-size: 16px; }
+h4 { font-size: 14px; font-weight: 500; color: #444; }
 
-/* filter panel */
-.filter-panel {
-    background: #1a1c24;
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
+/* Metric cards */
+[data-testid="metric-container"] {
+    background-color: #ffffff;
+    border: 1px solid #e5e5e3;
+    border-radius: 4px;
+    padding: 16px 20px;
+    box-shadow: none;
+}
+[data-testid="metric-container"] label {
+    font-size: 11px; font-weight: 500; color: #888 !important;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    font-family: 'Inter', sans-serif;
+}
+[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    font-size: 26px; font-weight: 600; color: #111 !important;
+    font-family: 'Source Serif 4', serif;
 }
 
-hr { border-color: rgba(255,255,255,0.06) !important; margin: 20px 0 !important; }
-p, span, label, li { color: #9a9aaa !important; font-family: 'DM Sans', sans-serif !important; }
-h1 { color: #f0f0f0 !important; font-size: 20px !important; font-weight: 600 !important; }
-h3 { color: #5a5a6a !important; font-size: 10px !important; font-weight: 600 !important;
-     letter-spacing: 1.2px !important; text-transform: uppercase !important; margin: 18px 0 12px !important; }
-iframe { border: none !important; }
-
-[data-testid="stButton"] button {
-    background: #1a1c24 !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    color: #9a9aaa !important;
-    font-size: 11px !important;
-    padding: 4px 12px !important;
-    border-radius: 6px !important;
-    font-family: 'DM Sans', sans-serif !important;
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    background-color: transparent;
+    border-bottom: 2px solid #e5e5e3;
+    gap: 0; padding-bottom: 0;
 }
-[data-testid="stButton"] button:hover {
-    border-color: #e87c2a !important;
-    color: #e87c2a !important;
+.stTabs [data-baseweb="tab"] {
+    background-color: transparent; color: #888;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    border-radius: 0; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; padding: 8px 16px;
+}
+.stTabs [aria-selected="true"] {
+    background-color: transparent !important;
+    color: #111 !important;
+    border-bottom: 2px solid #111 !important;
+}
+
+/* Misc */
+hr { border-color: #e5e5e3; }
+[data-testid="stDataFrame"] {
+    border: 1px solid #e5e5e3; border-radius: 4px; background: #fff;
+}
+[data-testid="stMultiSelect"] label, [data-testid="stSlider"] label {
+    font-size: 12px; font-weight: 500; color: #444 !important;
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
+[data-testid="stExpander"] {
+    background: #ffffff !important;
+    border: 1px solid #e5e5e3 !important;
+    border-radius: 4px !important;
+}
+
+/* Utility classes */
+.eyebrow {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600;
+    color: #888; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.kicker {
+    font-family: 'Source Serif 4', serif; font-size: 14px;
+    font-style: italic; color: #555;
+}
+.stat-label {
+    font-family: 'Inter', sans-serif; font-size: 11px; color: #888;
+    text-transform: uppercase; letter-spacing: 0.06em;
+}
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+/* Player card */
+.player-card {
+    background: #ffffff; border: 1px solid #e5e5e3; border-radius: 4px;
+    padding: 16px; margin-bottom: 0;
+}
+.player-card-name {
+    font-family: 'Source Serif 4', serif; font-size: 18px;
+    font-weight: 600; color: #111; margin: 0 0 2px 0;
+}
+.player-card-team {
+    font-family: 'Inter', sans-serif; font-size: 11px;
+    font-weight: 600; color: #888; text-transform: uppercase;
+    letter-spacing: 0.06em; margin: 0 0 12px 0;
+}
+.player-stat-row {
+    display: flex; justify-content: space-between;
+    border-top: 1px solid #f0f0ee; padding: 6px 0;
+}
+.player-stat-label {
+    font-family: 'Inter', sans-serif; font-size: 11px; color: #888;
+}
+.player-stat-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    font-weight: 500; color: #111;
+}
+.badge-good {
+    display:inline-block; background:#e8f5e9; color:#2e7d32;
+    font-size:11px; font-weight:600; padding:2px 8px;
+    border-radius:3px; font-family:'Inter',sans-serif;
+}
+.badge-bad {
+    display:inline-block; background:#fce4e4; color:#c62828;
+    font-size:11px; font-weight:600; padding:2px 8px;
+    border-radius:3px; font-family:'Inter',sans-serif;
+}
+.badge-neutral {
+    display:inline-block; background:#f5f5f5; color:#666;
+    font-size:11px; font-weight:600; padding:2px 8px;
+    border-radius:3px; font-family:'Inter',sans-serif;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -129,36 +185,141 @@ players_original["Team"] = players_original["TEAM"].str.upper()
 players          = players_original.dropna()
 players_filtered = players[players["GP"] >= 50]
 
-# ── Chart helpers ──────────────────────────────────────────────────────────────
-# BASE only contains keys that are NEVER overridden per-chart
-BASE = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="DM Sans", color="#9a9aaa", size=11),
-    coloraxis_showscale=False,
-    showlegend=False,
-)
+# ── Plotly theme — matches HSR base_layout ────────────────────────────────────
+PLOT_BG    = "#ffffff"
+PAPER_BG   = "#f7f7f5"
+GRID_COLOR = "#eeeeec"
+TEXT_COLOR = "#666666"
+ACCENT     = "#1a4b8c"
+GREEN      = "#1a6b3c"
+RED        = "#c0392b"
+AMBER      = "#b7791f"
+ORANGE     = "#c2410c"
 
-def _layout(title, height, margin=None, extra=None):
-    """Build a full layout dict without duplicate keys."""
-    d = dict(
-        **BASE,
-        title=dict(text=title, font=dict(size=13, color="#f0f0f0", family="DM Sans"), x=0),
+def base_layout(title="", height=400, xaxis=None, yaxis=None, margin=None):
+    default_axis = dict(gridcolor=GRID_COLOR, showline=False, zeroline=False)
+    x = {**default_axis, **(xaxis or {})}
+    y = {**default_axis, **(yaxis or {})}
+    return dict(
+        title=dict(text=title, font=dict(family="Inter", size=13, color="#111111")),
+        plot_bgcolor=PLOT_BG,
+        paper_bgcolor=PAPER_BG,
+        font=dict(family="Inter", color=TEXT_COLOR, size=11),
         height=height,
-        margin=margin or dict(l=16, r=16, t=44, b=16),
+        margin=margin or dict(l=40, r=20, t=44, b=60),
+        xaxis=x,
+        yaxis=y,
+        coloraxis_showscale=False,
+        showlegend=False,
     )
-    if extra:
-        d.update(extra)
-    return d
 
-def xaxis(tickangle=-35):
-    return dict(gridcolor="rgba(255,255,255,0.04)", linecolor="rgba(255,255,255,0.06)",
-                tickfont=dict(size=10, color="#9a9aaa"), tickangle=tickangle,
-                showgrid=False, zeroline=False)
+# ── Chart helpers ──────────────────────────────────────────────────────────────
+def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, pct=False):
+    d = df_in.sort_values(x_col, ascending=ascending)
+    suffix = "%" if pct else ""
+    norm = (d[x_col] - d[x_col].min()) / (d[x_col].max() - d[x_col].min() + 1e-9)
+    # Build color gradient from pale to full accent
+    import plotly.express as px
+    colors = px.colors.sample_colorscale(
+        [[0,"#ddeeff"],[1,color]] if color == ACCENT
+        else [[0,"#e8f5e9"],[1,GREEN]] if color == GREEN
+        else [[0,"#fde8e8"],[1,RED]],
+        norm.tolist()
+    )
+    fig = go.Figure(go.Bar(
+        x=d[x_col], y=d[y_col], orientation="h",
+        marker=dict(color=colors, line=dict(width=0), opacity=0.85),
+        text=[f"{v:.1f}{suffix}" for v in d[x_col]],
+        textposition="outside",
+        textfont=dict(size=10, color="#444"),
+        hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
+    ))
+    fig.update_layout(**base_layout(title, height=height,
+        yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
+                   autorange="reversed", tickfont=dict(size=10)),
+        xaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
+                   tickfont=dict(size=10)),
+    ))
+    return fig
 
-def yaxis():
-    return dict(gridcolor="rgba(255,255,255,0.05)", linecolor="rgba(255,255,255,0.06)",
-                tickfont=dict(size=10, color="#9a9aaa"), showgrid=True, zeroline=False)
+def lollipop(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, pct=False):
+    d = df_in.sort_values(x_col, ascending=ascending)
+    suffix = "%" if pct else ""
+    fig = go.Figure()
+    for _, row in d.iterrows():
+        fig.add_shape(type="line",
+            x0=0, x1=row[x_col], y0=row[y_col], y1=row[y_col],
+            line=dict(color=color, width=1.5), opacity=0.3)
+    fig.add_trace(go.Scatter(
+        x=d[x_col], y=d[y_col], mode="markers+text",
+        marker=dict(color=color, size=9, opacity=0.85,
+                    line=dict(color="#ffffff", width=1.5)),
+        text=[f"{v:.1f}{suffix}" for v in d[x_col]],
+        textposition="middle right",
+        textfont=dict(size=10, color="#444"),
+        hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
+    ))
+    fig.update_layout(**base_layout(title, height=height,
+        yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
+                   categoryorder="array", categoryarray=list(d[y_col]),
+                   tickfont=dict(size=10)),
+        xaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
+                   tickfont=dict(size=10)),
+    ))
+    return fig
+
+def donut(df_in, names, values, title, height=320):
+    fig = px.pie(df_in, names=names, values=values, hole=0.5, height=height,
+                 color_discrete_sequence=[ACCENT, RED, GREEN, AMBER, "#888"])
+    fig.update_traces(
+        textinfo="percent+label", pull=[0.02]*len(df_in),
+        marker=dict(line=dict(color=PAPER_BG, width=2)),
+        textfont=dict(size=11, color="#111"),
+    )
+    fig.update_layout(
+        paper_bgcolor=PAPER_BG, plot_bgcolor=PLOT_BG,
+        font=dict(family="Inter", color=TEXT_COLOR, size=11),
+        title=dict(text=title, font=dict(family="Inter", size=13, color="#111"), x=0),
+        margin=dict(l=12, r=12, t=44, b=12),
+        showlegend=True, height=height,
+        coloraxis_showscale=False,
+        legend=dict(font=dict(size=10, color="#666"), bgcolor="rgba(0,0,0,0)"),
+    )
+    return fig
+
+def vbar(df_in, x_col, y_col, title, color=ACCENT, height=320):
+    d = df_in.sort_values(x_col)
+    fig = go.Figure(go.Bar(
+        x=d[x_col].astype(str), y=d[y_col],
+        marker=dict(color=color, opacity=0.8, line=dict(width=0)),
+        text=[f"{v:,}" for v in d[y_col]],
+        textposition="outside",
+        textfont=dict(size=10, color="#444"),
+    ))
+    fig.update_layout(**base_layout(title, height=height,
+        xaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False, tickfont=dict(size=11)),
+        yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False, tickfont=dict(size=10)),
+    ))
+    return fig
+
+def scatter_chart(df_in, x_col, y_col, name_col, title, color=ACCENT, height=420):
+    fig = px.scatter(df_in, x=x_col, y=y_col, text=name_col, height=height,
+                     color=y_col,
+                     color_continuous_scale=[[0,"#ddeeff"],[0.5,ACCENT],[1,GREEN]])
+    fig.update_traces(
+        textposition="top center",
+        textfont=dict(size=8, color="#888"),
+        marker=dict(size=8, opacity=0.8, line=dict(color="#fff", width=1)),
+    )
+    fig.update_layout(**base_layout(title, height=height,
+        xaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
+                   title=dict(text=x_col, font=dict(size=11, color="#888")),
+                   tickfont=dict(size=10)),
+        yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
+                   title=dict(text=y_col, font=dict(size=11, color="#888")),
+                   tickfont=dict(size=10)),
+    ))
+    return fig
 
 def agg_top(df_in, col, top_n=10):
     c = df_in[col].value_counts().reset_index()
@@ -167,209 +328,58 @@ def agg_top(df_in, col, top_n=10):
     return c.head(top_n)
 
 def section(label):
-    st.markdown(f"<h3>{label}</h3>", unsafe_allow_html=True)
+    st.markdown(f"### {label}")
 
-# ── Horizontal lollipop chart ──────────────────────────────────────────────────
-def lollipop(df_in, y_col, x_col, title, color="#3b82f6", height=380, ascending=True, pct=False):
-    d = df_in.sort_values(x_col, ascending=ascending)
-    suffix = "%" if pct else ""
-    fig = go.Figure()
-    for _, row in d.iterrows():
-        fig.add_shape(type="line",
-            x0=0, x1=row[x_col], y0=row[y_col], y1=row[y_col],
-            line=dict(color=color, width=2), opacity=0.35)
-    fig.add_trace(go.Scatter(
-        x=d[x_col], y=d[y_col], mode="markers+text",
-        marker=dict(color=color, size=10, line=dict(color="#0e0f13", width=2)),
-        text=[f"{v:.1f}{suffix}" for v in d[x_col]],
-        textposition="middle right",
-        textfont=dict(size=10, color="#f0f0f0"),
-        hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
-    ))
-    fig.update_layout(**_layout(title, height, extra={
-        "xaxis": {**xaxis(0), "showgrid": True},
-        "yaxis": {**yaxis(), "showgrid": False,
-                  "categoryorder": "array",
-                  "categoryarray": list(d[y_col])},
-    }))
-    return fig
+def eyebrow(text):
+    st.markdown(f'<p class="eyebrow">{text}</p>', unsafe_allow_html=True)
 
-# ── Gradient horizontal bar ────────────────────────────────────────────────────
-def hbar(df_in, y_col, x_col, title, color_scale, height=380, ascending=True, pct=False):
-    d = df_in.sort_values(x_col, ascending=ascending)
-    suffix = "%" if pct else ""
-    norm = (d[x_col] - d[x_col].min()) / (d[x_col].max() - d[x_col].min() + 1e-9)
-    colors = px.colors.sample_colorscale(color_scale, norm.tolist())
-    fig = go.Figure(go.Bar(
-        x=d[x_col], y=d[y_col], orientation="h",
-        marker=dict(color=colors, line=dict(width=0)),
-        text=[f"{v:.1f}{suffix}" for v in d[x_col]],
-        textposition="inside",
-        textfont=dict(size=10, color="rgba(255,255,255,0.9)"),
-        hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
-    ))
-    fig.update_layout(**_layout(title, height, extra={
-        "xaxis": {**xaxis(0), "showgrid": True},
-        "yaxis": {**yaxis(), "showgrid": False,
-                  "categoryorder": "array",
-                  "categoryarray": list(d[y_col])},
-    }))
-    return fig
+# ── Sidebar ────────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown('<p class="eyebrow" style="margin-bottom:2px;">SwishScore</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-family:Inter;font-size:12px;color:#666;margin:0 0 16px 0;">NBA xP Prediction Model</p>', unsafe_allow_html=True)
+    st.divider()
 
-# ── Donut ──────────────────────────────────────────────────────────────────────
-def donut(df_in, names, values, title, height=340):
-    fig = px.pie(df_in, names=names, values=values, hole=0.5, height=height,
-                 color_discrete_sequence=["#3b82f6","#ef4444","#22c55e","#e87c2a","#a855f7"])
-    fig.update_traces(
-        textinfo="percent+label", pull=[0.03]*len(df_in),
-        marker=dict(line=dict(color="#0e0f13", width=2)),
-        textfont=dict(size=11, color="#f0f0f0"),
-    )
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="DM Sans", color="#9a9aaa", size=11),
-        title=dict(text=title, font=dict(size=13, color="#f0f0f0", family="DM Sans"), x=0),
-        margin=dict(l=12, r=12, t=44, b=12),
-        showlegend=True,
-        coloraxis_showscale=False,
-        legend=dict(font=dict(color="#9a9aaa", size=10),
-                    bgcolor="rgba(0,0,0,0)", x=1, y=0.5),
-        height=height,
-    )
-    return fig
+    st.markdown("### Filters")
 
-# ── Grouped bar (for quarter data) ────────────────────────────────────────────
-def vbar(df_in, x_col, y_col, title, color_scale="Blues", height=320, pct=False):
-    d = df_in.sort_values(x_col)
-    suffix = "%" if pct else ""
-    norm = (d[y_col] - d[y_col].min()) / (d[y_col].max() - d[y_col].min() + 1e-9)
-    colors = px.colors.sample_colorscale(color_scale, norm.tolist())
-    fig = go.Figure(go.Bar(
-        x=d[x_col].astype(str), y=d[y_col],
-        marker=dict(color=colors, line=dict(width=0)),
-        text=[f"{v:,}{suffix}" for v in d[y_col]],
-        textposition="outside",
-        textfont=dict(size=10, color="#9a9aaa"),
-        hovertemplate=f"%{{x}}: %{{y:,}}{suffix}<extra></extra>",
-    ))
-    fig.update_layout(**_layout(title, height, extra={
-        "xaxis": xaxis(0),
-        "yaxis": yaxis(),
-    }))
-    return fig
+    unique_teams = sorted(master_xp["TEAM_ABBRV"].unique())
+    unique_confs = sorted(master_xp["CONF"].unique())
+    unique_divs  = sorted(master_xp["DIVISION"].unique())
 
-# ── Scatter (eFG% vs ORTG) ────────────────────────────────────────────────────
-def scatter(df_in, x_col, y_col, name_col, title, height=420):
-    fig = px.scatter(df_in, x=x_col, y=y_col, text=name_col, height=height,
-                     color=y_col,
-                     color_continuous_scale=[[0,"#1d4ed8"],[0.5,"#e87c2a"],[1,"#22c55e"]])
-    fig.update_traces(
-        textposition="top center",
-        textfont=dict(size=9, color="#9a9aaa"),
-        marker=dict(size=9, line=dict(color="#0e0f13", width=1)),
-    )
-    fig.update_layout(**_layout(title, height, extra={
-        "xaxis": {**xaxis(0), "title": dict(text=x_col, font=dict(size=11, color="#9a9aaa"))},
-        "yaxis": {**yaxis(), "title": dict(text=y_col, font=dict(size=11, color="#9a9aaa"))},
-    }))
-    return fig
+    if "xp_reset" not in st.session_state:
+        st.session_state.xp_reset = False
+    if st.session_state.xp_reset:
+        for k, v in [("xp_teams", unique_teams),("xp_confs", unique_confs),("xp_divs", unique_divs)]:
+            st.session_state[k] = v
+        st.session_state.xp_reset = False
+        st.rerun()
 
-# ── xP progress-bar card ──────────────────────────────────────────────────────
-def xp_card(title, tag_text, tag_bg, tag_fg, data, name_col, val_col, bar_color, height=210):
-    max_val = data[val_col].max() or 1
-    rows = ""
-    for _, row in data.iterrows():
-        w = row[val_col] / max_val * 100
-        rows += f"""
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <span style="font-size:12px;color:#f0f0f0;width:130px;flex-shrink:0;
-                       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-                       font-family:'DM Sans',sans-serif;">{row[name_col]}</span>
-          <div style="flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
-            <div style="width:{w:.1f}%;height:100%;background:{bar_color};border-radius:3px;"></div>
-          </div>
-          <span style="font-size:11px;color:#9a9aaa;font-family:'DM Mono',monospace;
-                       width:36px;text-align:right;">{int(row[val_col])}%</span>
-        </div>"""
-    html = f"""<!DOCTYPE html><html><head>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
-    <style>*{{margin:0;padding:0;box-sizing:border-box;}}</style>
-    </head>
-    <body style="background:#1a1c24;padding:20px;border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-        <span style="font-size:13px;font-weight:500;color:#f0f0f0;font-family:'DM Sans',sans-serif;">{title}</span>
-        <span style="font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500;
-                     background:{tag_bg};color:{tag_fg};font-family:'DM Sans',sans-serif;">{tag_text}</span>
-      </div>
-      {rows}
-    </body></html>"""
-    st.html(html)
+    sel_teams = st.multiselect("Teams", unique_teams,
+        default=st.session_state.get("xp_teams", unique_teams), key="xp_teams")
+    sel_confs = st.multiselect("Conference", unique_confs,
+        default=st.session_state.get("xp_confs", unique_confs), key="xp_confs")
+    sel_divs  = st.multiselect("Division", unique_divs,
+        default=st.session_state.get("xp_divs", unique_divs),  key="xp_divs")
 
-# ── Zone badge grid ────────────────────────────────────────────────────────────
-def zone_grid(df_in, col):
-    counts = df_in[col].value_counts()
-    total  = counts.sum()
-    max_c  = counts.max()
-    cards  = ""
-    palette = ["#3b82f6","#e87c2a","#22c55e","#a855f7","#ef4444","#06b6d4","#84cc16","#f59e0b","#ec4899"]
-    for i, (zone, cnt) in enumerate(counts.items()):
-        pct   = cnt / total * 100
-        bar_w = cnt / max_c * 100
-        col_c = palette[i % len(palette)]
-        cards += f"""
-        <div style="background:#1a1c24;border:1px solid rgba(255,255,255,0.07);
-                    border-radius:8px;padding:14px 12px;text-align:center;">
-          <div style="font-size:9px;color:#5a5a6a;text-transform:uppercase;
-                      letter-spacing:0.6px;margin-bottom:6px;font-family:'DM Sans',sans-serif;">{zone}</div>
-          <div style="font-size:22px;font-weight:600;color:#f0f0f0;
-                      font-family:'DM Sans',sans-serif;letter-spacing:-0.5px;">{pct:.1f}%</div>
-          <div style="font-size:10px;color:#5a5a6a;margin-top:3px;
-                      font-family:'DM Sans',sans-serif;">{cnt:,} attempts</div>
-          <div style="height:3px;border-radius:2px;margin-top:10px;
-                      background:{col_c};width:{bar_w:.0f}%;margin-left:auto;margin-right:auto;"></div>
-        </div>"""
-    n_rows = -(-len(counts) // 3)
-    html = f"""<!DOCTYPE html><html><head>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>*{{margin:0;padding:0;box-sizing:border-box;}}
-    body{{background:#0e0f13;font-family:'DM Sans',sans-serif;padding:4px 0;}}
-    .g{{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}}
-    </style></head><body>
-    <div class="g">{cards}</div>
-    </body></html>"""
-    st.html(html)
+    min_games_xp = st.slider("Min games (xP)", 1, 82, 10)
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# HEADER
-# ═══════════════════════════════════════════════════════════════════════════════
-st.markdown("""
-<div style="display:flex;align-items:center;justify-content:space-between;
-            padding:0 0 20px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:6px;">
-  <div style="display:flex;align-items:center;gap:12px;">
-    <div style="width:34px;height:34px;border-radius:50%;background:#e87c2a;
-                display:flex;align-items:center;justify-content:center;
-                font-weight:700;font-size:15px;color:#fff;flex-shrink:0;">S</div>
-    <div>
-      <div style="font-size:17px;font-weight:600;color:#f0f0f0;letter-spacing:-0.4px;
-                  font-family:'DM Sans',sans-serif;">SwishScore</div>
-      <div style="font-size:11px;color:#5a5a6a;font-family:'DM Sans',sans-serif;">
-        NBA Shot Outcome Prediction &nbsp;·&nbsp; xP Model
-      </div>
-    </div>
-  </div>
-  <a href="https://github.com/jngoh24/swishscore_nba"
-     style="font-size:11px;color:#9a9aaa;text-decoration:none;
-            border:1px solid rgba(255,255,255,0.1);padding:5px 12px;
-            border-radius:6px;font-family:'DM Sans',sans-serif;">
-    github.com/jngoh24/swishscore_nba
-  </a>
-</div>
-""", unsafe_allow_html=True)
+    if st.button("↺  Reset filters"):
+        st.session_state.xp_reset = True
+        st.rerun()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# TABS
-# ═══════════════════════════════════════════════════════════════════════════════
+    st.divider()
+    st.markdown('<p style="font-family:Inter;font-size:11px;color:#888;line-height:1.6;">'
+                '<strong>xP outperformance</strong> — % of games where actual pts > expected pts.<br><br>'
+                '<strong>Avg delta</strong> — mean (actual − xP) per game.<br><br>'
+                '<strong>Delta %</strong> — delta normalised by xP baseline.</p>',
+                unsafe_allow_html=True)
+
+# ── Header ─────────────────────────────────────────────────────────────────────
+eyebrow("NBA · SwishScore xP Prediction Model")
+st.markdown('<h1 style="margin:0 0 4px 0;">Expected Points Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<p class="kicker">Shot-level xP model measuring how often teams and players outscore their expected output.</p>', unsafe_allow_html=True)
+st.divider()
+
+# ── Tabs ────────────────────────────────────────────────────────────────────────
 tab0, tab1, tab2, tab3 = st.tabs([
     "📈  xP Performance",
     "📊  Shooting Stats",
@@ -382,45 +392,13 @@ tab0, tab1, tab2, tab3 = st.tabs([
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab0:
 
-    # Filter toggle — NO st.expander
-    if "show_filters" not in st.session_state:
-        st.session_state.show_filters = False
-
-    if st.button("🔍  Filter options  ▾" if not st.session_state.show_filters else "🔍  Filter options  ▴"):
-        st.session_state.show_filters = not st.session_state.show_filters
-
-    unique_teams = sorted(master_xp["TEAM_ABBRV"].unique())
-    unique_confs = sorted(master_xp["CONF"].unique())
-    unique_divs  = sorted(master_xp["DIVISION"].unique())
-
-    if st.session_state.show_filters:
-        st.markdown('<div class="filter-panel">', unsafe_allow_html=True)
-        fc1, fc2, fc3 = st.columns(3)
-        with fc1:
-            sel_teams = st.multiselect("Team", unique_teams,
-                default=st.session_state.get("xp_teams", unique_teams), key="xp_teams")
-        with fc2:
-            sel_confs = st.multiselect("Conference", unique_confs,
-                default=st.session_state.get("xp_confs", unique_confs), key="xp_confs")
-        with fc3:
-            sel_divs = st.multiselect("Division", unique_divs,
-                default=st.session_state.get("xp_divs", unique_divs), key="xp_divs")
-        if st.button("↺  Reset"):
-            for k, v in [("xp_teams", unique_teams),("xp_confs", unique_confs),("xp_divs", unique_divs)]:
-                st.session_state[k] = v
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        sel_teams = st.session_state.get("xp_teams", unique_teams)
-        sel_confs = st.session_state.get("xp_confs", unique_confs)
-        sel_divs  = st.session_state.get("xp_divs",  unique_divs)
-
     fxp = master_xp[
         master_xp["TEAM_ABBRV"].isin(sel_teams) &
         master_xp["CONF"].isin(sel_confs) &
         master_xp["DIVISION"].isin(sel_divs)
     ]
 
+    # ── Team aggregation ───────────────────────────────────────────────────────
     tgs = fxp.groupby(["GAME_ID","TEAM_ABBRV"]).agg(
         total_xP=("xP","sum"), total_pts=("pts","sum")).reset_index()
     tgs["over"]      = (tgs["total_pts"] > tgs["total_xP"]).map({True:"yes",False:"no"})
@@ -434,16 +412,13 @@ with tab0:
     tp["total"] = tp["outperform"] + tp["underperform"]
     tp["outperform_pct"]   = (tp["outperform"]   / tp["total"] * 100).round()
     tp["underperform_pct"] = (tp["underperform"] / tp["total"] * 100).round()
-
-    # Merge in avg delta metrics from tgs
     tp_delta = tgs.groupby("TEAM_ABBRV").agg(
-        avg_delta=("delta","mean"),
-        avg_delta_pct=("delta_pct","mean")
-    ).reset_index()
+        avg_delta=("delta","mean"), avg_delta_pct=("delta_pct","mean")).reset_index()
     tp_delta["avg_delta"]     = tp_delta["avg_delta"].round(1)
     tp_delta["avg_delta_pct"] = tp_delta["avg_delta_pct"].round(1)
     tp = tp.merge(tp_delta, on="TEAM_ABBRV", how="left")
 
+    # ── Player aggregation ─────────────────────────────────────────────────────
     pgs = fxp.groupby(["GAME_ID","FULL NAME"]).agg(
         total_xP=("xP","sum"), total_pts=("pts","sum")).reset_index()
     pgs["over"]      = (pgs["total_pts"] > pgs["total_xP"]).map({True:"yes",False:"no"})
@@ -455,15 +430,11 @@ with tab0:
     for c in ["outperform","underperform"]:
         if c not in pp.columns: pp[c] = 0
     pp["total"] = pp["outperform"] + pp["underperform"]
-    pp = pp[pp["total"] >= 10]
+    pp = pp[pp["total"] >= min_games_xp]
     pp["outperform_pct"]   = (pp["outperform"]   / pp["total"] * 100).round()
     pp["underperform_pct"] = (pp["underperform"] / pp["total"] * 100).round()
-
-    # Merge in avg delta metrics
     pp_delta = pgs.groupby("FULL NAME").agg(
-        avg_delta=("delta","mean"),
-        avg_delta_pct=("delta_pct","mean")
-    ).reset_index()
+        avg_delta=("delta","mean"), avg_delta_pct=("delta_pct","mean")).reset_index()
     pp_delta["avg_delta"]     = pp_delta["avg_delta"].round(1)
     pp_delta["avg_delta_pct"] = pp_delta["avg_delta_pct"].round(1)
     pp = pp.merge(pp_delta, on="FULL NAME", how="left")
@@ -473,131 +444,121 @@ with tab0:
     top_und_t  = tp.sort_values("underperform_pct", ascending=False).head(5)
     top_und_p  = pp.sort_values("underperform_pct", ascending=False).head(5)
 
+    # ── KPI row ────────────────────────────────────────────────────────────────
     k1, k2, k3, k4, k5, k6 = st.columns(6)
     k1.metric("Teams in view",         len(tp))
-    k2.metric("Players (min 10 GP)",   len(pp))
+    k2.metric("Players (filtered)",    len(pp))
     k3.metric("Avg outperform rate",   f"{tp['outperform_pct'].mean():.0f}%")
     k4.metric("Avg underperform rate", f"{tp['underperform_pct'].mean():.0f}%")
-    best_team_delta = tp.loc[tp["avg_delta"].idxmax()]
-    k5.metric("Best avg pts above xP", f"+{best_team_delta['avg_delta']:.1f}", best_team_delta["TEAM_ABBRV"])
-    best_player_delta = pp.loc[pp["avg_delta"].idxmax()]
-    k6.metric("Best player avg delta", f"+{best_player_delta['avg_delta']:.1f}", best_player_delta["FULL NAME"])
-
-    st.divider()
-    section("Team xP Performance")
-    c1, c2 = st.columns(2)
-    with c1:
-        xp_card("Teams · xP Outperformance %", "Top 5",
-                "rgba(34,197,94,0.12)", "#22c55e",
-                top_out_t, "TEAM_ABBRV", "outperform_pct", "#22c55e")
-    with c2:
-        xp_card("Teams · xP Underperformance %", "Bottom 5",
-                "rgba(239,68,68,0.12)", "#ef4444",
-                top_und_t, "TEAM_ABBRV", "underperform_pct", "#ef4444")
+    best_td = tp.loc[tp["avg_delta"].idxmax()]
+    k5.metric("Best team avg Δ",       f"+{best_td['avg_delta']:.1f} pts", best_td["TEAM_ABBRV"])
+    best_pd = pp.loc[pp["avg_delta"].idxmax()]
+    k6.metric("Best player avg Δ",     f"+{best_pd['avg_delta']:.1f} pts", best_pd["FULL NAME"])
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-    section("Player xP Performance")
+
+    # ── xP outperformance % ────────────────────────────────────────────────────
+    st.divider()
+    section("xP Outperformance Rate")
+    st.markdown('<p class="kicker">% of games in which actual pts exceeded expected pts (xP)</p>', unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.plotly_chart(hbar(top_out_t, "TEAM_ABBRV", "outperform_pct",
+                             "Teams — top outperformance %",
+                             color=GREEN, height=300, ascending=True, pct=True),
+                        width='stretch')
+    with c2:
+        st.plotly_chart(hbar(top_out_p, "FULL NAME", "outperform_pct",
+                             "Players — top outperformance %",
+                             color=GREEN, height=300, ascending=True, pct=True),
+                        width='stretch')
+
     c3, c4 = st.columns(2)
     with c3:
-        xp_card("Players · xP Outperformance %", "Min 10 games",
-                "rgba(34,197,94,0.12)", "#22c55e",
-                top_out_p, "FULL NAME", "outperform_pct", "#22c55e")
+        st.plotly_chart(hbar(top_und_t, "TEAM_ABBRV", "underperform_pct",
+                             "Teams — top underperformance %",
+                             color=RED, height=300, ascending=True, pct=True),
+                        width='stretch')
     with c4:
-        xp_card("Players · xP Underperformance %", "Min 10 games",
-                "rgba(239,68,68,0.12)", "#ef4444",
-                top_und_p, "FULL NAME", "underperform_pct", "#ef4444")
+        st.plotly_chart(hbar(top_und_p, "FULL NAME", "underperform_pct",
+                             "Players — top underperformance %",
+                             color=RED, height=300, ascending=True, pct=True),
+                        width='stretch')
 
-    # ── Avg delta charts ──────────────────────────────────────────────────────
+    # ── Avg delta ──────────────────────────────────────────────────────────────
     st.divider()
     section("Avg Points Above / Below xP per Game")
-    st.markdown("""<div style="font-size:12px;color:#5a5a6a;margin:-8px 0 16px;font-family:'DM Sans',sans-serif;">
-        Average (actual pts − xP) per game. Positive = consistently scores above shot quality.
-    </div>""", unsafe_allow_html=True)
-
-    top5_team_delta  = tp.nlargest(5,  "avg_delta")[["TEAM_ABBRV","avg_delta"]]
-    bot5_team_delta  = tp.nsmallest(5, "avg_delta")[["TEAM_ABBRV","avg_delta"]]
-    top5_player_delta = pp.nlargest(5,  "avg_delta")[["FULL NAME","avg_delta"]]
-    bot5_player_delta = pp.nsmallest(5, "avg_delta")[["FULL NAME","avg_delta"]]
+    st.markdown('<p class="kicker">Mean of (actual pts − xP) per game. Positive = consistently scores above shot quality.</p>', unsafe_allow_html=True)
 
     d1, d2 = st.columns(2)
     with d1:
-        st.plotly_chart(hbar(top5_team_delta, "TEAM_ABBRV", "avg_delta",
-                             "Teams · best avg pts above xP",
-                             color_scale="Greens", height=280, ascending=True),
+        st.plotly_chart(hbar(tp.nlargest(5,"avg_delta")[["TEAM_ABBRV","avg_delta"]],
+                             "TEAM_ABBRV", "avg_delta", "Teams — best avg Δ pts",
+                             color=GREEN, height=280, ascending=True),
                         width='stretch')
     with d2:
-        st.plotly_chart(hbar(top5_player_delta, "FULL NAME", "avg_delta",
-                             "Players · best avg pts above xP",
-                             color_scale="Greens", height=280, ascending=True),
+        st.plotly_chart(hbar(pp.nlargest(5,"avg_delta")[["FULL NAME","avg_delta"]],
+                             "FULL NAME", "avg_delta", "Players — best avg Δ pts",
+                             color=GREEN, height=280, ascending=True),
                         width='stretch')
 
     d3, d4 = st.columns(2)
     with d3:
-        st.plotly_chart(hbar(bot5_team_delta, "TEAM_ABBRV", "avg_delta",
-                             "Teams · worst avg pts below xP",
-                             color_scale="Reds", height=280, ascending=False),
+        st.plotly_chart(hbar(tp.nsmallest(5,"avg_delta")[["TEAM_ABBRV","avg_delta"]],
+                             "TEAM_ABBRV", "avg_delta", "Teams — worst avg Δ pts",
+                             color=RED, height=280, ascending=False),
                         width='stretch')
     with d4:
-        st.plotly_chart(hbar(bot5_player_delta, "FULL NAME", "avg_delta",
-                             "Players · worst avg pts below xP",
-                             color_scale="Reds", height=280, ascending=False),
+        st.plotly_chart(hbar(pp.nsmallest(5,"avg_delta")[["FULL NAME","avg_delta"]],
+                             "FULL NAME", "avg_delta", "Players — worst avg Δ pts",
+                             color=RED, height=280, ascending=False),
                         width='stretch')
 
-    # ── Avg delta % charts ─────────────────────────────────────────────────────
+    # ── Delta % ────────────────────────────────────────────────────────────────
     st.divider()
-    section("Avg xP Delta % per Game  (normalised by xP)")
-    st.markdown("""<div style="font-size:12px;color:#5a5a6a;margin:-8px 0 16px;font-family:'DM Sans',sans-serif;">
-        ((actual pts − xP) / xP) × 100. Accounts for different playing time / xP baselines.
-    </div>""", unsafe_allow_html=True)
-
-    top5_team_dpct   = tp.nlargest(5,  "avg_delta_pct")[["TEAM_ABBRV","avg_delta_pct"]]
-    bot5_team_dpct   = tp.nsmallest(5, "avg_delta_pct")[["TEAM_ABBRV","avg_delta_pct"]]
-    top5_player_dpct = pp.nlargest(5,  "avg_delta_pct")[["FULL NAME","avg_delta_pct"]]
-    bot5_player_dpct = pp.nsmallest(5, "avg_delta_pct")[["FULL NAME","avg_delta_pct"]]
+    section("Avg xP Delta % per Game")
+    st.markdown('<p class="kicker">((actual pts − xP) / xP) × 100. Normalised for playing time and role.</p>', unsafe_allow_html=True)
 
     e1, e2 = st.columns(2)
     with e1:
-        st.plotly_chart(hbar(top5_team_dpct, "TEAM_ABBRV", "avg_delta_pct",
-                             "Teams · best avg xP delta %",
-                             color_scale="Greens", height=280, ascending=True, pct=True),
+        st.plotly_chart(hbar(tp.nlargest(5,"avg_delta_pct")[["TEAM_ABBRV","avg_delta_pct"]],
+                             "TEAM_ABBRV","avg_delta_pct","Teams — best avg xP delta %",
+                             color=GREEN, height=280, ascending=True, pct=True),
                         width='stretch')
     with e2:
-        st.plotly_chart(hbar(top5_player_dpct, "FULL NAME", "avg_delta_pct",
-                             "Players · best avg xP delta %",
-                             color_scale="Greens", height=280, ascending=True, pct=True),
+        st.plotly_chart(hbar(pp.nlargest(5,"avg_delta_pct")[["FULL NAME","avg_delta_pct"]],
+                             "FULL NAME","avg_delta_pct","Players — best avg xP delta %",
+                             color=GREEN, height=280, ascending=True, pct=True),
                         width='stretch')
 
     e3, e4 = st.columns(2)
     with e3:
-        st.plotly_chart(hbar(bot5_team_dpct, "TEAM_ABBRV", "avg_delta_pct",
-                             "Teams · worst avg xP delta %",
-                             color_scale="Reds", height=280, ascending=False, pct=True),
+        st.plotly_chart(hbar(tp.nsmallest(5,"avg_delta_pct")[["TEAM_ABBRV","avg_delta_pct"]],
+                             "TEAM_ABBRV","avg_delta_pct","Teams — worst avg xP delta %",
+                             color=RED, height=280, ascending=False, pct=True),
                         width='stretch')
     with e4:
-        st.plotly_chart(hbar(bot5_player_dpct, "FULL NAME", "avg_delta_pct",
-                             "Players · worst avg xP delta %",
-                             color_scale="Reds", height=280, ascending=False, pct=True),
+        st.plotly_chart(hbar(pp.nsmallest(5,"avg_delta_pct")[["FULL NAME","avg_delta_pct"]],
+                             "FULL NAME","avg_delta_pct","Players — worst avg xP delta %",
+                             color=RED, height=280, ascending=False, pct=True),
                         width='stretch')
 
-    # ── Scatter: outperform % vs avg delta ─────────────────────────────────────
+    # ── Scatter ────────────────────────────────────────────────────────────────
     st.divider()
     section("Outperformance Rate vs Avg Points Above xP")
-    st.markdown("""<div style="font-size:12px;color:#5a5a6a;margin:-8px 0 16px;font-family:'DM Sans',sans-serif;">
-        Top-right = consistently wins games AND beats xP by a large margin. Most elite performers.
-    </div>""", unsafe_allow_html=True)
+    st.markdown('<p class="kicker">Top-right = frequently beats xP by a large margin. The truest elite performers.</p>', unsafe_allow_html=True)
 
-    c1, c2 = st.columns(2)
-    with c1:
-        st.plotly_chart(
-            scatter(tp, "outperform_pct", "avg_delta", "TEAM_ABBRV",
-                    "Teams — outperformance % vs avg pts above xP", height=420),
-            width='stretch')
-    with c2:
-        top30p = pp.nlargest(30, "avg_delta")
-        st.plotly_chart(
-            scatter(top30p, "outperform_pct", "avg_delta", "FULL NAME",
-                    "Players (top 30) — outperformance % vs avg pts above xP", height=420),
-            width='stretch')
+    sc1, sc2 = st.columns(2)
+    with sc1:
+        st.plotly_chart(scatter_chart(tp,"outperform_pct","avg_delta","TEAM_ABBRV",
+                                      "Teams — rate vs avg Δ", height=400),
+                        width='stretch')
+    with sc2:
+        top30p = pp.nlargest(30,"avg_delta")
+        st.plotly_chart(scatter_chart(top30p,"outperform_pct","avg_delta","FULL NAME",
+                                      "Players (top 30) — rate vs avg Δ", height=400),
+                        width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 1 · SHOOTING STATS
@@ -610,11 +571,14 @@ with tab1:
     fg_pct = round(made / total_shots * 100, 1) if total_shots else 0
     top_zone = shots["ZONE_NAME"].mode()[0] if "ZONE_NAME" in shots.columns else "—"
 
-    k1, k2, k3, k4 = st.columns(4)
+    k1, k2, k3, k4, k5 = st.columns(5)
     k1.metric("Total shots tracked", f"{total_shots:,}")
     k2.metric("Made",                f"{made:,}")
     k3.metric("Missed",              f"{missed:,}")
     k4.metric("FG%",                 f"{fg_pct}%")
+    k5.metric("Top zone",            top_zone)
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     st.divider()
     section("Shot Outcomes & Game Flow")
@@ -627,36 +591,50 @@ with tab1:
                             width='stretch')
     with c2:
         if "QUARTER" in shots.columns:
-            qd = agg_top(shots,"QUARTER",6)
-            st.plotly_chart(vbar(qd,"QUARTER","count","Shots per quarter", color_scale="Blues", height=340),
+            st.plotly_chart(vbar(agg_top(shots,"QUARTER",6),"QUARTER","count",
+                                 "Shots per quarter", color=ACCENT, height=320),
                             width='stretch')
 
     st.divider()
-    section("Shot Action Types — top 10")
+    section("Shot Action Types")
     if "ACTION_TYPE" in shots.columns:
-        act = agg_top(shots,"ACTION_TYPE",10)
-        st.plotly_chart(hbar(act,"ACTION_TYPE","count","Top 10 shot action types",
-                             color_scale="Oranges", height=420, ascending=True),
+        st.plotly_chart(hbar(agg_top(shots,"ACTION_TYPE",10),"ACTION_TYPE","count",
+                             "Top 10 shot action types", color=ORANGE, height=420, ascending=True),
                         width='stretch')
 
     st.divider()
     section("Zone Distribution")
+
     if "ZONE_NAME" in shots.columns:
-        zone_grid(shots, "ZONE_NAME")
+        zone_data = shots["ZONE_NAME"].value_counts().reset_index()
+        zone_data.columns = ["Zone","Count"]
+        zone_data["Pct"] = (zone_data["Count"] / zone_data["Count"].sum() * 100).round(1)
+        cols = st.columns(len(zone_data))
+        palette = [ACCENT, ORANGE, GREEN, RED, AMBER, "#7c3aed","#0891b2","#be185d","#854d0e"]
+        for i, (_, row) in enumerate(zone_data.iterrows()):
+            with cols[i % len(cols)]:
+                st.markdown(f"""
+                <div style="background:#fff;border:1px solid #e5e5e3;border-radius:4px;
+                            padding:14px 10px;text-align:center;border-top:3px solid {palette[i % len(palette)]};">
+                  <p style="font-family:Inter;font-size:10px;color:#888;text-transform:uppercase;
+                             letter-spacing:0.5px;margin:0 0 4px;">{row['Zone']}</p>
+                  <p style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;
+                             color:#111;margin:0;">{row['Pct']:.1f}%</p>
+                  <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#888;
+                             margin:3px 0 0;">{row['Count']:,} attempts</p>
+                </div>""", unsafe_allow_html=True)
 
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
     z1, z2 = st.columns(2)
     with z1:
         if "BASIC_ZONE" in shots.columns:
             st.plotly_chart(hbar(agg_top(shots,"BASIC_ZONE",8),"BASIC_ZONE","count",
-                                 "Shot distribution by basic zone",
-                                 color_scale="Blues", height=340, ascending=True),
+                                 "By basic zone", color=ACCENT, height=340, ascending=True),
                             width='stretch')
     with z2:
         if "ZONE_RANGE" in shots.columns:
             st.plotly_chart(lollipop(agg_top(shots,"ZONE_RANGE",8),"ZONE_RANGE","count",
-                                     "Shot range distribution",
-                                     color="#3b82f6", height=340),
+                                     "By range", color=ACCENT, height=340, ascending=True),
                             width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -674,74 +652,64 @@ with tab2:
     bot10_deff  = teams[["TEAM","dEFF"]].drop_duplicates().sort_values("dEFF",ascending=False).head(10)
 
     k1, k2, k3, k4 = st.columns(4)
-    k1.metric("Most attempts",   f"{top10_shots['count'].iloc[0]:,}",  top10_shots['TEAM_NAME'].iloc[0])
-    k2.metric("Fewest attempts", f"{bot10_shots['count'].iloc[0]:,}",  bot10_shots['TEAM_NAME'].iloc[0])
-    k3.metric("Best def. oPPG",  f"{top10_oppg['oPPG'].iloc[0]:.1f}", top10_oppg['TEAM'].iloc[0])
-    k4.metric("Best dEFF",       f"{top10_deff['dEFF'].iloc[0]:.1f}", top10_deff['TEAM'].iloc[0])
+    k1.metric("Most attempts",  f"{top10_shots['count'].iloc[0]:,}",  top10_shots['TEAM_NAME'].iloc[0])
+    k2.metric("Fewest attempts",f"{bot10_shots['count'].iloc[0]:,}",  bot10_shots['TEAM_NAME'].iloc[0])
+    k3.metric("Best def. oPPG", f"{top10_oppg['oPPG'].iloc[0]:.1f}", top10_oppg['TEAM'].iloc[0])
+    k4.metric("Best dEFF",      f"{top10_deff['dEFF'].iloc[0]:.1f}", top10_deff['TEAM'].iloc[0])
 
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     st.divider()
     section("Shot Volume by Team")
     c1, c2 = st.columns(2)
     with c1:
-        st.plotly_chart(hbar(top10_shots,"TEAM_NAME","count",
-                             "Top 10 shot volume teams",
-                             color_scale="Blues", height=380, ascending=True),
-                        width='stretch')
+        st.plotly_chart(hbar(top10_shots,"TEAM_NAME","count","Top 10 shot volume teams",
+                             color=ACCENT, height=380, ascending=True), width='stretch')
     with c2:
-        st.plotly_chart(lollipop(bot10_shots,"TEAM_NAME","count",
-                                 "Bottom 10 shot volume teams",
-                                 color="#ef4444", height=380, ascending=True),
-                        width='stretch')
+        st.plotly_chart(lollipop(bot10_shots,"TEAM_NAME","count","Bottom 10 shot volume teams",
+                                 color=RED, height=380, ascending=True), width='stretch')
 
     st.divider()
     section("Defensive Efficiency")
     c3, c4 = st.columns(2)
     with c3:
-        st.plotly_chart(hbar(top10_oppg,"TEAM","oPPG",
-                             "Best defensive oPPG (lower = better)",
-                             color_scale="Greens", height=360, ascending=True),
-                        width='stretch')
-        st.plotly_chart(hbar(bot10_oppg,"TEAM","oPPG",
-                             "Worst defensive oPPG",
-                             color_scale="Reds", height=360, ascending=False),
-                        width='stretch')
+        st.plotly_chart(hbar(top10_oppg,"TEAM","oPPG","Best defensive oPPG (lower = better)",
+                             color=GREEN, height=360, ascending=True), width='stretch')
+        st.plotly_chart(hbar(bot10_oppg,"TEAM","oPPG","Worst defensive oPPG",
+                             color=RED, height=360, ascending=False), width='stretch')
     with c4:
-        st.plotly_chart(hbar(top10_deff,"TEAM","dEFF",
-                             "Best defensive efficiency (dEFF)",
-                             color_scale="Greens", height=360, ascending=True),
-                        width='stretch')
-        st.plotly_chart(hbar(bot10_deff,"TEAM","dEFF",
-                             "Worst defensive efficiency (dEFF)",
-                             color_scale="Reds", height=360, ascending=False),
-                        width='stretch')
+        st.plotly_chart(hbar(top10_deff,"TEAM","dEFF","Best defensive efficiency (dEFF)",
+                             color=GREEN, height=360, ascending=True), width='stretch')
+        st.plotly_chart(hbar(bot10_deff,"TEAM","dEFF","Worst defensive efficiency (dEFF)",
+                             color=RED, height=360, ascending=False), width='stretch')
 
-    # Scatter: oPPG vs dEFF
     st.divider()
     section("Defensive Profile — oPPG vs dEFF")
-    all_teams = teams[["TEAM","oPPG","dEFF"]].drop_duplicates()
-    st.plotly_chart(scatter(all_teams,"oPPG","dEFF","TEAM",
-                            "Team defensive profile — oPPG allowed vs defensive efficiency",
-                            height=480),
-                    width='stretch')
+    all_teams_df = teams[["TEAM","oPPG","dEFF"]].drop_duplicates()
+    st.plotly_chart(scatter_chart(all_teams_df,"oPPG","dEFF","TEAM",
+                                  "Team defensive profile — oPPG allowed vs defensive efficiency",
+                                  height=480), width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 3 · PLAYER STATS
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab3:
 
-    st.info("Showing players with 50+ games played this season")
+    st.markdown(
+        '<p style="font-family:Inter;font-size:12px;color:#888;margin-bottom:16px;">'
+        'Showing players with 50+ games played this season</p>',
+        unsafe_allow_html=True)
 
     shot_takers = shots["PLAYER_NAME"].value_counts().head(10).reset_index()
     shot_takers.columns = ["PLAYER_NAME","Shot Attempts"]
 
     stat_cols = [
-        ("eFG%", "Top 10 effective FG% (eFG%)",   "Greens"),
-        ("TS%",  "Top 10 true shooting % (TS%)",   "Greens"),
-        ("2P%",  "Top 10 two-point FG% (2P%)",     "Blues"),
-        ("3P%",  "Top 10 three-point FG% (3P%)",   "Oranges"),
-        ("ORTG", "Top 10 offensive rating (ORTG)",  "Blues"),
+        ("eFG%", "Top 10 effective FG%",    GREEN),
+        ("TS%",  "Top 10 true shooting %",  GREEN),
+        ("2P%",  "Top 10 two-point FG%",    ACCENT),
+        ("3P%",  "Top 10 three-point FG%",  ORANGE),
+        ("ORTG", "Top 10 offensive rating", ACCENT),
     ]
-    valid = [(c,l,s) for c,l,s in stat_cols if c in players_filtered.columns]
+    valid = [(c,l,col) for c,l,col in stat_cols if c in players_filtered.columns]
 
     # KPI row
     kpi_cols = st.columns(len(valid))
@@ -750,39 +718,162 @@ with tab3:
         suffix = "%" if "%" in col else ""
         kc.metric(col, f"{best[col]:.1f}{suffix}", best["FULL NAME"])
 
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
+    # ── Player cards ───────────────────────────────────────────────────────────
+    st.divider()
+    section("Player Cards")
+    st.markdown('<p class="kicker">Select a player to view their full shooting profile.</p>', unsafe_allow_html=True)
+
+    player_search = st.selectbox(
+        "Search player",
+        options=sorted(players_filtered["FULL NAME"].dropna().unique()),
+        key="player_card_selector"
+    )
+
+    sel_player = players_filtered[players_filtered["FULL NAME"] == player_search]
+
+    if not sel_player.empty:
+        pm = sel_player.iloc[0]
+
+        # Also pull xP data for this player if available
+        xp_row = pp[pp["FULL NAME"] == player_search] if not pp.empty else pd.DataFrame()
+
+        pc1, pc2, pc3 = st.columns([1, 1, 1])
+
+        with pc1:
+            # Identity card
+            team_name = pm.get("TEAM", pm.get("Team", "—"))
+            pos_name  = pm.get("POS", pm.get("Pos", "—"))
+            gp        = int(pm.get("GP", 0))
+            st.markdown(f"""
+            <div style="background:#fff;border:1px solid #e5e5e3;border-radius:4px;
+                        padding:20px;border-top:3px solid {ACCENT};">
+              <p style="font-family:Inter;font-size:11px;font-weight:600;color:#888;
+                        text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px;">{team_name} &nbsp;·&nbsp; {pos_name}</p>
+              <p style="font-family:'Source Serif 4',serif;font-size:24px;font-weight:600;
+                        color:#111;margin:0 0 12px;">{player_search}</p>
+              <div style="border-top:1px solid #f0f0ee;padding-top:10px;">
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Games played</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{gp}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">eFG%</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('eFG%',0):.1f}%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">TS%</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('TS%',0):.1f}%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">2P%</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('2P%',0):.1f}%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">3P%</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('3P%',0):.1f}%</span>
+                </div>
+              </div>
+            </div>""", unsafe_allow_html=True)
+
+        with pc2:
+            # Advanced stats card
+            ortg = pm.get("ORTG", 0)
+            st.markdown(f"""
+            <div style="background:#fff;border:1px solid #e5e5e3;border-radius:4px;
+                        padding:20px;border-top:3px solid {GREEN};">
+              <p style="font-family:Inter;font-size:11px;font-weight:600;color:#888;
+                        text-transform:uppercase;letter-spacing:0.08em;margin:0 0 16px;">Advanced Stats</p>
+              <div style="border-top:1px solid #f0f0ee;padding-top:10px;">
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Offensive Rating</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{ortg:.1f}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Shot attempts (season)</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{shots[shots['PLAYER_NAME']==player_search].shape[0]:,}</span>
+                </div>
+              </div>
+            </div>""", unsafe_allow_html=True)
+
+        with pc3:
+            # xP card
+            if not xp_row.empty:
+                xr = xp_row.iloc[0]
+                out_pct  = xr.get("outperform_pct", 0)
+                und_pct  = xr.get("underperform_pct", 0)
+                avg_d    = xr.get("avg_delta", 0)
+                avg_dpct = xr.get("avg_delta_pct", 0)
+                total_g  = int(xr.get("total", 0))
+                delta_badge = f'<span class="badge-good">+{avg_d:.1f} pts</span>' if avg_d >= 0 else f'<span class="badge-bad">{avg_d:.1f} pts</span>'
+                st.markdown(f"""
+                <div style="background:#fff;border:1px solid #e5e5e3;border-radius:4px;
+                            padding:20px;border-top:3px solid {ORANGE};">
+                  <p style="font-family:Inter;font-size:11px;font-weight:600;color:#888;
+                            text-transform:uppercase;letter-spacing:0.08em;margin:0 0 16px;">xP Profile</p>
+                  <div style="border-top:1px solid #f0f0ee;padding-top:10px;">
+                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                      <span style="font-family:Inter;font-size:11px;color:#888;">Games analysed</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{total_g}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                      <span style="font-family:Inter;font-size:11px;color:#888;">Outperformance rate</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{out_pct:.0f}%</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                      <span style="font-family:Inter;font-size:11px;color:#888;">Underperformance rate</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{und_pct:.0f}%</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                      <span style="font-family:Inter;font-size:11px;color:#888;">Avg pts above xP</span>
+                      {delta_badge}
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:5px 0;">
+                      <span style="font-family:Inter;font-size:11px;color:#888;">Avg delta %</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{avg_dpct:+.1f}%</span>
+                    </div>
+                  </div>
+                </div>""", unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div style="background:#fff;border:1px solid #e5e5e3;border-radius:4px;
+                            padding:20px;border-top:3px solid {ORANGE};">
+                  <p style="font-family:Inter;font-size:11px;font-weight:600;color:#888;
+                            text-transform:uppercase;letter-spacing:0.08em;margin:0 0 12px;">xP Profile</p>
+                  <p style="font-family:Inter;font-size:12px;color:#888;">
+                    Not enough games to compute xP profile (min {min_games_xp} games required).
+                    Adjust the sidebar filter to include this player.</p>
+                </div>""", unsafe_allow_html=True)
+
     st.divider()
     section("Shot Volume")
     st.plotly_chart(hbar(shot_takers,"PLAYER_NAME","Shot Attempts",
                          "Top 10 shot takers this season",
-                         color_scale="Oranges", height=380, ascending=True),
-                    width='stretch')
+                         color=ORANGE, height=380, ascending=True), width='stretch')
 
     st.divider()
     section("Shooting Efficiency")
 
-    # eFG% vs TS% scatter
     if "eFG%" in players_filtered.columns and "TS%" in players_filtered.columns:
         top30 = players_filtered.nlargest(30,"eFG%")
-        st.plotly_chart(scatter(top30,"eFG%","TS%","FULL NAME",
-                                "eFG% vs TS% — top 30 players by eFG%", height=460),
+        st.plotly_chart(scatter_chart(top30,"eFG%","TS%","FULL NAME",
+                                      "eFG% vs TS% — top 30 players by eFG%", height=460),
                         width='stretch')
 
     st.divider()
     c1, c2 = st.columns(2)
     sides = [c1, c2, c1, c2, c1]
-    for (col, title, scale), side in zip(valid, sides):
+    for (col, title, color), side in zip(valid, sides):
         top_df = players_filtered[["FULL NAME",col]].sort_values(col,ascending=False).head(10)
         with side:
             st.plotly_chart(hbar(top_df,"FULL NAME",col,title,
-                                 color_scale=scale, height=360,
-                                 ascending=True, pct=("%" in col)),
+                                 color=color, height=360, ascending=True, pct=("%" in col)),
                             width='stretch')
 
 # ── Footer ─────────────────────────────────────────────────────────────────────
-st.markdown("""
-<div style="margin-top:48px;padding:16px 0;border-top:1px solid rgba(255,255,255,0.06);
-            text-align:center;font-size:11px;color:#5a5a6a;font-family:'DM Sans',sans-serif;">
-  SwishScore &nbsp;·&nbsp; NBA xP Model &nbsp;·&nbsp;
-  <a href="https://github.com/jngoh24/swishscore_nba" style="color:#e87c2a;text-decoration:none;">jngoh24</a>
-</div>
-""", unsafe_allow_html=True)
+st.divider()
+st.markdown(
+    '<p style="text-align:center;font-family:Inter,sans-serif;font-size:11px;color:#aaa;">'
+    'SwishScore · NBA xP Prediction Model · github.com/jngoh24/swishscore_nba</p>',
+    unsafe_allow_html=True)
