@@ -734,7 +734,7 @@ with tab_player:
             delta    = val - lg_avg
             suffix   = "%" if "%" in col else ""
             # delta label: show vs league avg with arrow direction
-            delta_str = f"{delta:+.1f}{suffix} vs lg avg"
+            delta_str = f"{delta:+.1f}{suffix} vs league avg"
             kc.metric(col, f"{val:.1f}{suffix}", delta_str)
         else:
             best   = players_filtered.loc[players_filtered[col].idxmax()]
