@@ -130,15 +130,26 @@ players          = players_original.dropna()
 players_filtered = players[players["GP"] >= 50]
 
 # ── Chart helpers ──────────────────────────────────────────────────────────────
+# BASE only contains keys that are NEVER overridden per-chart
 BASE = dict(
-    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
     font=dict(family="DM Sans", color="#9a9aaa", size=11),
-    margin=dict(l=16, r=16, t=44, b=16),
     coloraxis_showscale=False,
-    title_font=dict(size=13, color="#f0f0f0", family="DM Sans"),
-    title_x=0,
     showlegend=False,
 )
+
+def _layout(title, height, margin=None, extra=None):
+    """Build a full layout dict without duplicate keys."""
+    d = dict(
+        **BASE,
+        title=dict(text=title, font=dict(size=13, color="#f0f0f0", family="DM Sans"), x=0),
+        height=height,
+        margin=margin or dict(l=16, r=16, t=44, b=16),
+    )
+    if extra:
+        d.update(extra)
+    return d
 
 def xaxis(tickangle=-35):
     return dict(gridcolor="rgba(255,255,255,0.04)", linecolor="rgba(255,255,255,0.06)",
@@ -175,11 +186,12 @@ def lollipop(df_in, y_col, x_col, title, color="#3b82f6", height=380, ascending=
         textfont=dict(size=10, color="#f0f0f0"),
         hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
     ))
-    fig.update_layout(**BASE, title=title, height=height,
-                      xaxis={**xaxis(0), "showgrid": True},
-                      yaxis={**yaxis(), "showgrid": False,
-                             "categoryorder": "array",
-                             "categoryarray": list(d[y_col])})
+    fig.update_layout(**_layout(title, height, extra={
+        "xaxis": {**xaxis(0), "showgrid": True},
+        "yaxis": {**yaxis(), "showgrid": False,
+                  "categoryorder": "array",
+                  "categoryarray": list(d[y_col])},
+    }))
     return fig
 
 # ── Gradient horizontal bar ────────────────────────────────────────────────────
@@ -196,11 +208,12 @@ def hbar(df_in, y_col, x_col, title, color_scale, height=380, ascending=True, pc
         textfont=dict(size=10, color="rgba(255,255,255,0.9)"),
         hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
     ))
-    fig.update_layout(**BASE, title=title, height=height,
-                      xaxis={**xaxis(0), "showgrid": True},
-                      yaxis={**yaxis(), "showgrid": False,
-                             "categoryorder": "array",
-                             "categoryarray": list(d[y_col])})
+    fig.update_layout(**_layout(title, height, extra={
+        "xaxis": {**xaxis(0), "showgrid": True},
+        "yaxis": {**yaxis(), "showgrid": False,
+                  "categoryorder": "array",
+                  "categoryarray": list(d[y_col])},
+    }))
     return fig
 
 # ── Donut ──────────────────────────────────────────────────────────────────────
@@ -240,10 +253,10 @@ def vbar(df_in, x_col, y_col, title, color_scale="Blues", height=320, pct=False)
         textfont=dict(size=10, color="#9a9aaa"),
         hovertemplate=f"%{{x}}: %{{y:,}}{suffix}<extra></extra>",
     ))
-    fig.update_layout(**BASE, title=title, height=height,
-                      xaxis={**xaxis(0)},
-                      yaxis={**yaxis()},
-                      margin=dict(l=16, r=16, t=44, b=16))
+    fig.update_layout(**_layout(title, height, extra={
+        "xaxis": xaxis(0),
+        "yaxis": yaxis(),
+    }))
     return fig
 
 # ── Scatter (eFG% vs ORTG) ────────────────────────────────────────────────────
@@ -256,9 +269,10 @@ def scatter(df_in, x_col, y_col, name_col, title, height=420):
         textfont=dict(size=9, color="#9a9aaa"),
         marker=dict(size=9, line=dict(color="#0e0f13", width=1)),
     )
-    fig.update_layout(**BASE, title=title,
-                      xaxis={**xaxis(0), "title": dict(text=x_col, font=dict(size=11, color="#9a9aaa"))},
-                      yaxis={**yaxis(), "title": dict(text=y_col, font=dict(size=11, color="#9a9aaa"))})
+    fig.update_layout(**_layout(title, height, extra={
+        "xaxis": {**xaxis(0), "title": dict(text=x_col, font=dict(size=11, color="#9a9aaa"))},
+        "yaxis": {**yaxis(), "title": dict(text=y_col, font=dict(size=11, color="#9a9aaa"))},
+    }))
     return fig
 
 # ── xP progress-bar card ──────────────────────────────────────────────────────
