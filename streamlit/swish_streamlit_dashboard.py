@@ -167,7 +167,7 @@ def load_drive_csv(file_id, filename):
     path = os.path.join(DATA_DIR, filename)
     if not os.path.exists(path):
         url = f"https://drive.google.com/uc?id={file_id}&export=download&confirm=t"
-        gdown.download(url=url, output=path, quiet=False, fuzzy=True, use_cookies=False)
+        gdown.download(url=url, output=path, quiet=False, use_cookies=False)
     return pd.read_csv(path)
 
 @st.cache_data(show_spinner=False)
