@@ -262,7 +262,7 @@ def diverging_bar(df_in, y_col, x_col, title, height=420, top_n=20, pct=False,
     half = top_n // 2
     d_best  = df_in.nsmallest(half, x_col)
     d_worst = df_in.nlargest(half, x_col)
-    d = pd.concat([d_best, d_worst]).drop_duplicates(subset=[y_col]).sort_values(x_col, ascending=True)
+    d = pd.concat([d_best, d_worst]).drop_duplicates(subset=[y_col]).sort_values(x_col, ascending=False)
     suffix = "%" if pct else ""
     colors = [neg_color if v <= 0 else pos_color for v in d[x_col]]
 
