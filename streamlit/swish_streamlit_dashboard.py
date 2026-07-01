@@ -214,7 +214,7 @@ def base_layout(title="", height=400, xaxis=None, yaxis=None, margin=None):
     )
 
 # ── Chart helpers ──────────────────────────────────────────────────────────────
-def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, pct=False):
+def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, pct=False, decimals=1):
     d = df_in.sort_values(x_col, ascending=not ascending)
     suffix = "%" if pct else ""
     norm = (d[x_col] - d[x_col].min()) / (d[x_col].max() - d[x_col].min() + 1e-9)
@@ -239,11 +239,11 @@ def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, p
     fig = go.Figure(go.Bar(
         x=d[x_col], y=d[y_col], orientation="h",
         marker=dict(color=colors, line=dict(width=0), opacity=0.85),
-        text=[f"{v:.1f}{suffix}" for v in d[x_col]],
+        text=[f"{v:.{decimals}f}{suffix}" for v in d[x_col]],
         textposition="outside",
         cliponaxis=False,
         textfont=dict(size=10, color="#444"),
-        hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
+        hovertemplate=f"%{{y}}: %{{x:.{decimals}f}}{suffix}<extra></extra>",
     ))
     fig.update_layout(**base_layout(title, height=height,
         yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
@@ -892,7 +892,7 @@ with tab_player:
     section("Shot Volume")
     st.plotly_chart(hbar(shot_takers,"PLAYER_NAME","Shot Attempts",
                          "Top 10 shot takers this season",
-                         color=ORANGE, height=380, ascending=True), width='stretch')
+                         color=ORANGE, height=380, ascending=True, decimals=0), width='stretch')
 
     st.divider()
     section("Shooting Efficiency")
