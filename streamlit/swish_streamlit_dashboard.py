@@ -194,7 +194,9 @@ players_filtered = players[players["GP"] >= 50]
 # ── Player shooting tendency — mirrors the foul model's pl_enc pattern ──
 LEAGUE_AVG_2P = players["2P%"].mean()
 LEAGUE_AVG_3P = players["3P%"].mean()
-_player_pct = players.set_index("FULL NAME")[["2P%", "3P%"]]
+# Some players have multiple rows (e.g. traded mid-season) — average their 2P%/3P%
+# so the lookup index is unique, otherwise .map() raises InvalidIndexError.
+_player_pct = players.groupby("FULL NAME")[["2P%", "3P%"]].mean()
 shots["PLAYER_2P_PCT"] = shots["PLAYER_NAME"].map(_player_pct["2P%"]).fillna(LEAGUE_AVG_2P)
 shots["PLAYER_3P_PCT"] = shots["PLAYER_NAME"].map(_player_pct["3P%"]).fillna(LEAGUE_AVG_3P)
 
@@ -1098,8 +1100,7 @@ with tab_model:
         if who == "League average":
             pl_2p, pl_3p = LEAGUE_AVG_2P, LEAGUE_AVG_3P
         else:
-            prow = players.loc[players["FULL NAME"] == who].iloc[0]
-            pl_2p, pl_3p = float(prow["2P%"]), float(prow["3P%"])
+            pl_2p, pl_3p = float(_player_pct.loc[who, "2P%"]), float(_player_pct.loc[who, "3P%"])
         row["PLAYER_2P_PCT"] = pl_2p
         row["PLAYER_3P_PCT"] = pl_3p
         st.markdown(f'<p style="font-family:Inter;font-size:11px;color:#888;margin:0 0 10px;">'
