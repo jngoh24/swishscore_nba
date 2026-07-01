@@ -412,6 +412,7 @@ with tab0:
     tp["total"] = tp["outperform"] + tp["underperform"]
     tp["outperform_pct"]   = (tp["outperform"]   / tp["total"] * 100).round()
     tp["underperform_pct"] = (tp["underperform"] / tp["total"] * 100).round()
+    tp["underperform_pct_neg"] = -tp["underperform_pct"]
     tp_delta = tgs.groupby("TEAM_ABBRV").agg(
         avg_delta=("delta","mean"), avg_delta_pct=("delta_pct","mean")).reset_index()
     tp_delta["avg_delta"]     = tp_delta["avg_delta"].round(1)
@@ -433,6 +434,7 @@ with tab0:
     pp = pp[pp["total"] >= min_games_xp]
     pp["outperform_pct"]   = (pp["outperform"]   / pp["total"] * 100).round()
     pp["underperform_pct"] = (pp["underperform"] / pp["total"] * 100).round()
+    pp["underperform_pct_neg"] = -pp["underperform_pct"]
     pp_delta = pgs.groupby("FULL NAME").agg(
         avg_delta=("delta","mean"), avg_delta_pct=("delta_pct","mean")).reset_index()
     pp_delta["avg_delta"]     = pp_delta["avg_delta"].round(1)
@@ -459,7 +461,7 @@ with tab0:
 
     # ── xP outperformance % ────────────────────────────────────────────────────
     st.divider()
-    section("xP Performance")
+    section("xP Outperformance Rate")
     st.markdown('<p class="kicker">% of games in which actual pts exceeded expected pts (xP)</p>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
@@ -476,14 +478,14 @@ with tab0:
 
     c3, c4 = st.columns(2)
     with c3:
-        st.plotly_chart(hbar(top_und_t, "TEAM_ABBRV", "underperform_pct",
+        st.plotly_chart(hbar(top_und_t, "TEAM_ABBRV", "underperform_pct_neg",
                              "Teams — top underperformance %",
-                             color=RED, height=300, ascending=True, pct=True),
+                             color=RED, height=300, ascending=False, pct=True),
                         width='stretch')
     with c4:
-        st.plotly_chart(hbar(top_und_p, "FULL NAME", "underperform_pct",
+        st.plotly_chart(hbar(top_und_p, "FULL NAME", "underperform_pct_neg",
                              "Players — top underperformance %",
-                             color=RED, height=300, ascending=True, pct=True),
+                             color=RED, height=300, ascending=False, pct=True),
                         width='stretch')
 
     # ── Avg delta ──────────────────────────────────────────────────────────────
