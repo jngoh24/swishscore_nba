@@ -292,7 +292,7 @@ def diverging_bar(df_in, y_col, x_col, title, height=420, top_n=20, pct=False,
     ))
     return fig
 
-def lollipop(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, pct=False):
+def lollipop(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, pct=False, decimals=1):
     d = df_in.sort_values(x_col, ascending=ascending)
     suffix = "%" if pct else ""
     fig = go.Figure()
@@ -304,10 +304,10 @@ def lollipop(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=Tru
         x=d[x_col], y=d[y_col], mode="markers+text",
         marker=dict(color=color, size=9, opacity=0.85,
                     line=dict(color="#ffffff", width=1.5)),
-        text=[f"{v:.1f}{suffix}" for v in d[x_col]],
+        text=[f"{v:.{decimals}f}{suffix}" for v in d[x_col]],
         textposition="middle right",
         textfont=dict(size=10, color="#444"),
-        hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
+        hovertemplate=f"%{{y}}: %{{x:.{decimals}f}}{suffix}<extra></extra>",
     ))
     fig.update_layout(**base_layout(title, height=height,
         yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
@@ -323,6 +323,7 @@ def donut(df_in, names, values, title, height=320):
                  color_discrete_sequence=[ACCENT, RED, GREEN, AMBER, "#888"])
     fig.update_traces(
         textinfo="percent+label", pull=[0.02]*len(df_in),
+        texttemplate="%{label}<br>%{percent:.0%}",
         marker=dict(line=dict(color=PAPER_BG, width=2)),
         textfont=dict(size=11, color="#111"),
     )
@@ -670,7 +671,7 @@ with tab_shoot:
     section("Shot Action Types")
     if "ACTION_TYPE" in shots.columns:
         st.plotly_chart(hbar(agg_top(shots,"ACTION_TYPE",10),"ACTION_TYPE","count",
-                             "Top 10 shot action types", color=ORANGE, height=420, ascending=True),
+                             "Top 10 shot action types", color=ORANGE, height=420, ascending=True, decimals=0),
                         width='stretch')
 
     st.divider()
@@ -690,7 +691,7 @@ with tab_shoot:
                   <p style="font-family:Inter;font-size:10px;color:#888;text-transform:uppercase;
                              letter-spacing:0.5px;margin:0 0 4px;">{row['Zone']}</p>
                   <p style="font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;
-                             color:#111;margin:0;">{row['Pct']:.1f}%</p>
+                             color:#111;margin:0;">{row['Pct']:.0f}%</p>
                   <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#888;
                              margin:3px 0 0;">{row['Count']:,} attempts</p>
                 </div>""", unsafe_allow_html=True)
@@ -700,12 +701,12 @@ with tab_shoot:
     with z1:
         if "BASIC_ZONE" in shots.columns:
             st.plotly_chart(hbar(agg_top(shots,"BASIC_ZONE",8),"BASIC_ZONE","count",
-                                 "By basic zone", color=ACCENT, height=340, ascending=True),
+                                 "By basic zone", color=ACCENT, height=340, ascending=True, decimals=0),
                             width='stretch')
     with z2:
         if "ZONE_RANGE" in shots.columns:
             st.plotly_chart(lollipop(agg_top(shots,"ZONE_RANGE",8),"ZONE_RANGE","count",
-                                     "By range", color=ACCENT, height=340, ascending=True),
+                                     "By range", color=ACCENT, height=340, ascending=True, decimals=0),
                             width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
