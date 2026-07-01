@@ -1161,5 +1161,7 @@ with tab_model:
 st.divider()
 st.markdown(
     '<p style="text-align:center;font-family:Inter,sans-serif;font-size:11px;color:#aaa;">'
-    'SwishScore · NBA xP Prediction Model · github.com/jngoh24/swishscore_nba</p>',
+    'SwishScore · NBA xP Prediction Model · '
+    '<a href="https://github.com/jngoh24/swishscore_nba" target="_blank" '
+    'style="color:#888;text-decoration:underline;">View on GitHub</a></p>',
     unsafe_allow_html=True)
