@@ -710,6 +710,7 @@ with tab_player:
         ("ORTG", "Top 10 offensive rating", ACCENT),
     ]
     valid = [(c,l,col) for c,l,col in stat_cols if c in players_filtered.columns]
+    PCT_COLS = {"eFG%", "TS%", "2P%", "3P%"}
 
     # ── Player selector (drives KPIs + cards) ────────────────────────────────
     st.divider()
@@ -728,18 +729,19 @@ with tab_player:
     sel_for_kpi = players_filtered[players_filtered["FULL NAME"] == player_search]
     kpi_cols = st.columns(len(valid))
     for (col, label, _), kc in zip(valid, kpi_cols):
+        is_pct = col in PCT_COLS
+        scale  = 100 if is_pct else 1
+        suffix = "%" if "%" in col else ""
         if not sel_for_kpi.empty:
-            val      = sel_for_kpi.iloc[0][col]
-            lg_avg   = league_avgs[col]
+            val      = sel_for_kpi.iloc[0][col] * scale
+            lg_avg   = league_avgs[col] * scale
             delta    = val - lg_avg
-            suffix   = "%" if "%" in col else ""
             # delta label: show vs league avg with arrow direction
             delta_str = f"{delta:+.1f}{suffix} vs league avg"
             kc.metric(col, f"{val:.1f}{suffix}", delta_str)
         else:
-            best   = players_filtered.loc[players_filtered[col].idxmax()]
-            suffix = "%" if "%" in col else ""
-            kc.metric(col, f"{best[col]:.1f}{suffix}", best["FULL NAME"])
+            best = players_filtered.loc[players_filtered[col].idxmax()]
+            kc.metric(col, f"{best[col]*scale:.1f}{suffix}", best["FULL NAME"])
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
@@ -772,19 +774,19 @@ with tab_player:
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
                   <span style="font-family:Inter;font-size:11px;color:#888;">eFG%</span>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('eFG%',0):.1f}%</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('eFG%',0)*100:.1f}%</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
                   <span style="font-family:Inter;font-size:11px;color:#888;">TS%</span>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('TS%',0):.1f}%</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('TS%',0)*100:.1f}%</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
                   <span style="font-family:Inter;font-size:11px;color:#888;">2P%</span>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('2P%',0):.1f}%</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('2P%',0)*100:.1f}%</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:5px 0;">
                   <span style="font-family:Inter;font-size:11px;color:#888;">3P%</span>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('3P%',0):.1f}%</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{pm.get('3P%',0)*100:.1f}%</span>
                 </div>
               </div>
             </div>""", unsafe_allow_html=True)
@@ -877,10 +879,13 @@ with tab_player:
     c1, c2 = st.columns(2)
     sides = [c1, c2, c1, c2, c1]
     for (col, title, color), side in zip(valid, sides):
-        top_df = players_filtered[["FULL NAME",col]].sort_values(col,ascending=False).head(10)
+        top_df = players_filtered[["FULL NAME",col]].copy()
+        if col in PCT_COLS:
+            top_df[col] = top_df[col] * 100
+        top_df = top_df.sort_values(col,ascending=False).head(10)
         with side:
             st.plotly_chart(hbar(top_df,"FULL NAME",col,title,
-                                 color=color, height=360, ascending=True, pct=("%" in col)),
+                                 color=color, height=360, ascending=True, pct=(col in PCT_COLS)),
                             width='stretch')
 
 # ── Footer ─────────────────────────────────────────────────────────────────────
