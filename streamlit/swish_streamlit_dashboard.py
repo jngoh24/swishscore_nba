@@ -191,9 +191,16 @@ players_original["Team"] = players_original["TEAM"].str.upper()
 players          = players_original.dropna()
 players_filtered = players[players["GP"] >= 50]
 
+# ── Player shooting tendency — mirrors the foul model's pl_enc pattern ──
+LEAGUE_AVG_2P = players["2P%"].mean()
+LEAGUE_AVG_3P = players["3P%"].mean()
+_player_pct = players.set_index("FULL NAME")[["2P%", "3P%"]]
+shots["PLAYER_2P_PCT"] = shots["PLAYER_NAME"].map(_player_pct["2P%"]).fillna(LEAGUE_AVG_2P)
+shots["PLAYER_3P_PCT"] = shots["PLAYER_NAME"].map(_player_pct["3P%"]).fillna(LEAGUE_AVG_3P)
+
 # ── Shot-make model — mirrors the foul-won model pattern: trained live in-app ──
 MODEL_CAT = [c for c in ["BASIC_ZONE", "ZONE_RANGE", "ZONE_NAME", "ACTION_TYPE"] if c in shots.columns]
-MODEL_NUM = [c for c in ["QUARTER"] if c in shots.columns]
+MODEL_NUM = [c for c in ["QUARTER"] if c in shots.columns] + ["PLAYER_2P_PCT", "PLAYER_3P_PCT"]
 MODEL_FEATS = MODEL_CAT + MODEL_NUM
 
 def infer_point_value(basic_zone):
@@ -1084,6 +1091,22 @@ with tab_model:
         st.markdown(f'<p style="font-family:JetBrains Mono,monospace;font-size:10px;color:#aaa;margin:0 0 8px;">'
                     f'{remaining_n:,} matching shots in the training data</p>', unsafe_allow_html=True)
 
+        st.markdown('<p class="eyebrow" style="margin:10px 0 4px;">Shooter profile</p>', unsafe_allow_html=True)
+        player_names = ["League average"] + sorted(players["FULL NAME"].dropna().unique().tolist())
+        who = st.selectbox("Use a specific player's shooting profile (optional)", player_names,
+                           label_visibility="collapsed")
+        if who == "League average":
+            pl_2p, pl_3p = LEAGUE_AVG_2P, LEAGUE_AVG_3P
+        else:
+            prow = players.loc[players["FULL NAME"] == who].iloc[0]
+            pl_2p, pl_3p = float(prow["2P%"]), float(prow["3P%"])
+        row["PLAYER_2P_PCT"] = pl_2p
+        row["PLAYER_3P_PCT"] = pl_3p
+        st.markdown(f'<p style="font-family:Inter;font-size:11px;color:#888;margin:0 0 10px;">'
+                    f'2P% used: {pl_2p*100:.1f}% (league avg {LEAGUE_AVG_2P*100:.1f}%) · '
+                    f'3P% used: {pl_3p*100:.1f}% (league avg {LEAGUE_AVG_3P*100:.1f}%)</p>',
+                    unsafe_allow_html=True)
+
         quarter_val = None
         if "QUARTER" in MODEL_NUM:
             q_min = int(shots["QUARTER"].min())
@@ -1128,8 +1151,9 @@ with tab_model:
         st.plotly_chart(fig_g, width='stretch')
 
         st.markdown('<p style="font-family:Inter;font-size:12px;color:#888;">'
-                    'Biggest levers are typically shot zone and action type. Swap zones to see '
-                    'how much of a shot\'s value comes from location vs. shot selection.</p>',
+                    'Biggest levers are typically shot zone, action type, and the shooter\'s own '
+                    'career FG% at that shot type. Swap the shooter profile to see how much of a '
+                    'shot\'s value comes from who\'s taking it vs. where it\'s taken from.</p>',
                     unsafe_allow_html=True)
 
 # ── Footer ─────────────────────────────────────────────────────────────────────
