@@ -1061,42 +1061,41 @@ with tab_model:
     cfg, out = st.columns([1.25, 1])
     with cfg:
         st.markdown('<p class="eyebrow" style="margin:0 0 4px;">Shot location</p>', unsafe_allow_html=True)
-        a, b = st.columns(2)
-        basic_zone_val = None
-        if "BASIC_ZONE" in MODEL_CAT:
-            basic_zone_opts = sorted(shots["BASIC_ZONE"].dropna().unique().tolist())
-            basic_zone_val = a.selectbox("Basic zone", basic_zone_opts)
-        zone_range_val = None
-        if "ZONE_RANGE" in MODEL_CAT:
-            zone_range_opts = sorted(shots["ZONE_RANGE"].dropna().unique().tolist())
-            zone_range_val = b.selectbox("Zone range", zone_range_opts)
+        st.markdown('<p style="font-family:Inter;font-size:11px;color:#888;margin:0 0 10px;">'
+                    'Each choice narrows the next to combinations that actually occur in the shot log — '
+                    'so, for example, an "Above the Break 3" can\'t also be tagged as a restricted-area dunk.</p>',
+                    unsafe_allow_html=True)
 
-        zone_name_val = None
-        if "ZONE_NAME" in MODEL_CAT:
-            zone_name_opts = sorted(shots["ZONE_NAME"].dropna().unique().tolist())
-            zone_name_val = a.selectbox("Zone", zone_name_opts)
-        action_type_val = None
-        if "ACTION_TYPE" in MODEL_CAT:
-            action_type_opts = sorted(shots["ACTION_TYPE"].dropna().unique().tolist())
-            action_type_val = b.selectbox("Shot action type", action_type_opts)
+        # Cascading selects: filter the working set of shots after each pick, so every
+        # subsequent dropdown only offers values that co-occur with what's already chosen.
+        CASCADE_ORDER = [c for c in ["BASIC_ZONE", "ZONE_RANGE", "ZONE_NAME", "ACTION_TYPE"] if c in MODEL_CAT]
+        cascade_filtered = shots
+        row = {}
+        cols = st.columns(2)
+        for i, feat in enumerate(CASCADE_ORDER):
+            opts = sorted(cascade_filtered[feat].dropna().unique().tolist())
+            label = {"BASIC_ZONE": "Basic zone", "ZONE_RANGE": "Zone range",
+                     "ZONE_NAME": "Zone", "ACTION_TYPE": "Shot action type"}[feat]
+            val = cols[i % 2].selectbox(label, opts)
+            row[feat] = val
+            cascade_filtered = cascade_filtered[cascade_filtered[feat] == val]
+
+        remaining_n = len(cascade_filtered)
+        st.markdown(f'<p style="font-family:JetBrains Mono,monospace;font-size:10px;color:#aaa;margin:0 0 8px;">'
+                    f'{remaining_n:,} matching shots in the training data</p>', unsafe_allow_html=True)
 
         quarter_val = None
         if "QUARTER" in MODEL_NUM:
             q_min = int(shots["QUARTER"].min())
             q_max = int(shots["QUARTER"].max())
             quarter_val = st.slider("Quarter", q_min, q_max, min(q_min + 1, q_max))
+            row["QUARTER"] = quarter_val
 
+        basic_zone_val = row.get("BASIC_ZONE")
         pt_value = infer_point_value(basic_zone_val) if basic_zone_val is not None else 2
-        st.markdown(f'<p class="caption" style="font-family:Inter;font-size:12px;color:#888;">'
+        st.markdown(f'<p style="font-family:Inter;font-size:12px;color:#888;">'
                     f'Detected as a <strong>{pt_value}-point</strong> attempt based on zone.</p>',
                     unsafe_allow_html=True)
-
-    row = {}
-    if "BASIC_ZONE" in MODEL_CAT: row["BASIC_ZONE"] = basic_zone_val
-    if "ZONE_RANGE" in MODEL_CAT: row["ZONE_RANGE"] = zone_range_val
-    if "ZONE_NAME" in MODEL_CAT: row["ZONE_NAME"] = zone_name_val
-    if "ACTION_TYPE" in MODEL_CAT: row["ACTION_TYPE"] = action_type_val
-    if "QUARTER" in MODEL_NUM: row["QUARTER"] = quarter_val
 
     prob = float(model.predict_proba(pd.DataFrame([row])[MODEL_FEATS])[:, 1][0])
     xp_value = prob * pt_value
