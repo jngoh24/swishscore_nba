@@ -226,11 +226,19 @@ def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, p
         else [[0,"#fde8e8"],[1,RED]],
         norm.tolist()
     )
+    # Pad the x-axis range so outside-positioned labels never clip against the plot edge
+    lo = min(d[x_col].min(), 0)
+    hi = max(d[x_col].max(), 0)
+    span = (hi - lo) if hi != lo else (abs(hi) or 1)
+    pad = span * 0.18
+    x_range = [lo - pad, hi + pad]
+
     fig = go.Figure(go.Bar(
         x=d[x_col], y=d[y_col], orientation="h",
         marker=dict(color=colors, line=dict(width=0), opacity=0.85),
         text=[f"{v:.1f}{suffix}" for v in d[x_col]],
         textposition="outside",
+        cliponaxis=False,
         textfont=dict(size=10, color="#444"),
         hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
     ))
@@ -238,7 +246,7 @@ def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, p
         yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
                    autorange="reversed", tickfont=dict(size=10)),
         xaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
-                   tickfont=dict(size=10)),
+                   tickfont=dict(size=10), range=x_range),
     ))
     return fig
 
