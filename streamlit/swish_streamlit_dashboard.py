@@ -215,7 +215,7 @@ def base_layout(title="", height=400, xaxis=None, yaxis=None, margin=None):
 
 # ── Chart helpers ──────────────────────────────────────────────────────────────
 def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, pct=False):
-    d = df_in.sort_values(x_col, ascending=ascending)
+    d = df_in.sort_values(x_col, ascending=not ascending)
     suffix = "%" if pct else ""
     norm = (d[x_col] - d[x_col].min()) / (d[x_col].max() - d[x_col].min() + 1e-9)
     # Build color gradient from pale to full accent
