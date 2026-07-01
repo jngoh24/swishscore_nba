@@ -505,12 +505,12 @@ st.markdown('<p class="kicker">Shot-level xP model measuring how often teams and
 st.divider()
 
 # ── Tabs ────────────────────────────────────────────────────────────────────────
-tab0, tab_player, tab_shoot, tab_team, tab_model = st.tabs([
+tab0, tab_model, tab_player, tab_shoot, tab_team = st.tabs([
     "📈  xP Performance",
+    "🎯  Model",
     "👤  Player Stats",
     "📊  Shooting Stats",
     "🏀  Team Stats",
-    "🎯  Model",
 ])
 
 # ═══════════════════════════════════════════════════════════════════════════════
