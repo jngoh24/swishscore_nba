@@ -459,7 +459,7 @@ with tab0:
 
     # ── xP outperformance % ────────────────────────────────────────────────────
     st.divider()
-    section("xP Outperformance Rate")
+    section("xP Performance")
     st.markdown('<p class="kicker">% of games in which actual pts exceeded expected pts (xP)</p>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
