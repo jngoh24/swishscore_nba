@@ -253,15 +253,18 @@ def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, p
     ))
     return fig
 
-def diverging_bar(df_in, y_col, x_col, title, height=420, top_n=20, pct=False):
+def diverging_bar(df_in, y_col, x_col, title, height=420, top_n=20, pct=False,
+                   pos_color=RED, neg_color=GREEN, decimals=1):
     # Shows the top_n//2 lowest and top_n//2 highest values, centered on a zero baseline.
     # Pass a deviation-from-average column as x_col — negative = below average, positive = above.
+    # pos_color/neg_color default to a good/bad framing (RED=above avg, GREEN=below avg) —
+    # override both when the metric has no inherent "better" direction (e.g. shot volume).
     half = top_n // 2
     d_best  = df_in.nsmallest(half, x_col)
     d_worst = df_in.nlargest(half, x_col)
     d = pd.concat([d_best, d_worst]).drop_duplicates(subset=[y_col]).sort_values(x_col, ascending=True)
     suffix = "%" if pct else ""
-    colors = [GREEN if v <= 0 else RED for v in d[x_col]]
+    colors = [neg_color if v <= 0 else pos_color for v in d[x_col]]
 
     lo = min(d[x_col].min(), 0)
     hi = max(d[x_col].max(), 0)
@@ -273,11 +276,11 @@ def diverging_bar(df_in, y_col, x_col, title, height=420, top_n=20, pct=False):
     fig = go.Figure(go.Bar(
         x=d[x_col], y=d[y_col], orientation="h",
         marker=dict(color=colors, line=dict(width=0), opacity=0.85),
-        text=[f"{'+' if v >= 0 else ''}{v:.1f}{suffix}" for v in d[x_col]],
+        text=[f"{'+' if v >= 0 else ''}{v:.{decimals}f}{suffix}" for v in d[x_col]],
         textposition="outside",
         cliponaxis=False,
         textfont=dict(size=10, color="#444"),
-        hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
+        hovertemplate=f"%{{y}}: %{{x:.{decimals}f}}{suffix}<extra></extra>",
     ))
     fig.update_layout(**base_layout(title, height=height,
         yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
@@ -715,6 +718,11 @@ with tab_team:
     bot10_shots = shots["TEAM_NAME"].value_counts().tail(10).reset_index()
     bot10_shots.columns = ["TEAM_NAME","count"]
 
+    all_shots_df = shots["TEAM_NAME"].value_counts().reset_index()
+    all_shots_df.columns = ["TEAM_NAME","count"]
+    avg_shots = all_shots_df["count"].mean()
+    all_shots_df["shots_dev"] = (all_shots_df["count"] - avg_shots).round(0)
+
     all_teams_df = teams[["TEAM","oPPG","dEFF"]].drop_duplicates()
     avg_oppg = all_teams_df["oPPG"].mean()
     avg_deff = all_teams_df["dEFF"].mean()
@@ -733,13 +741,12 @@ with tab_team:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     st.divider()
     section("Shot Volume by Team")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.plotly_chart(hbar(top10_shots,"TEAM_NAME","count","Top 10 shot volume teams",
-                             color=ACCENT, height=380, ascending=True), width='stretch')
-    with c2:
-        st.plotly_chart(lollipop(bot10_shots,"TEAM_NAME","count","Bottom 10 shot volume teams",
-                                 color=RED, height=380, ascending=True), width='stretch')
+    st.markdown('<p class="kicker">Deviation from league-average shot attempts. Top 10 highest and lowest volume teams.</p>', unsafe_allow_html=True)
+    st.plotly_chart(diverging_bar(all_shots_df, "TEAM_NAME", "shots_dev",
+                                  "Shot attempts vs league average",
+                                  height=560, top_n=20, decimals=0,
+                                  pos_color=ACCENT, neg_color=ORANGE),
+                    width='stretch')
 
     st.divider()
     section("Defensive Efficiency")
