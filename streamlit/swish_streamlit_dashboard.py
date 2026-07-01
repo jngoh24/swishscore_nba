@@ -794,6 +794,13 @@ with tab_player:
         with pc2:
             # Advanced stats card
             ortg = pm.get("ORTG", 0)
+            drtg = pm.get("DRTG", 0)
+            usg  = pm.get("USG%", 0) * 100
+            ast_pct = pm.get("AST%", 0) * 100
+            trb_pct = pm.get("TRB%", 0) * 100
+            to_pct  = pm.get("TO%", 0) * 100
+            vi   = pm.get("VI", 0)
+            mpg  = pm.get("MPG", 0)
             st.markdown(f"""
             <div style="background:#fff;border:1px solid #e5e5e3;border-radius:4px;
                         padding:20px;border-top:3px solid {GREEN};">
@@ -805,6 +812,34 @@ with tab_player:
                   <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{ortg:.1f}</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Defensive Rating</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{drtg:.1f}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Usage rate</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{usg:.1f}%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Assist rate</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{ast_pct:.1f}%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Rebound rate</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{trb_pct:.1f}%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Turnover rate</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{to_pct:.1f}%</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Versatility index</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{vi:.1f}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f9f9f7;">
+                  <span style="font-family:Inter;font-size:11px;color:#888;">Minutes per game</span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{mpg:.1f}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:5px 0;">
                   <span style="font-family:Inter;font-size:11px;color:#888;">Shot attempts (season)</span>
                   <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#111;font-weight:500;">{shots[shots['PLAYER_NAME']==player_search].shape[0]:,}</span>
                 </div>
