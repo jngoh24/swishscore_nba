@@ -4,6 +4,12 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -184,6 +190,46 @@ with st.spinner("Loading SwishScore data..."):
 players_original["Team"] = players_original["TEAM"].str.upper()
 players          = players_original.dropna()
 players_filtered = players[players["GP"] >= 50]
+
+# ── Shot-make model — mirrors the foul-won model pattern: trained live in-app ──
+MODEL_CAT = [c for c in ["BASIC_ZONE", "ZONE_RANGE", "ZONE_NAME", "ACTION_TYPE"] if c in shots.columns]
+MODEL_NUM = [c for c in ["QUARTER"] if c in shots.columns]
+MODEL_FEATS = MODEL_CAT + MODEL_NUM
+
+def infer_point_value(basic_zone):
+    if isinstance(basic_zone, str) and "3" in basic_zone:
+        return 3
+    return 2
+
+@st.cache_resource
+def get_shot_model(_shots_df, cat_feats, num_feats):
+    d = _shots_df.copy()
+    d["made"] = d["EVENT_TYPE"].str.lower().str.contains("made").astype(int)
+    d = d.dropna(subset=cat_feats + num_feats)
+    X = d[cat_feats + num_feats].copy()
+    for c in cat_feats:
+        X[c] = X[c].fillna("Unknown").astype(str)
+    y = d["made"].values
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y)
+
+    pre = ColumnTransformer(
+        [("cat", OrdinalEncoder(handle_unknown="use_encoded_value",
+                                unknown_value=-1), cat_feats)],
+        remainder="passthrough")
+    pipe = Pipeline([("pre", pre),
+                     ("hgb", HistGradientBoostingClassifier(
+                         max_iter=300, learning_rate=0.06, max_leaf_nodes=31,
+                         min_samples_leaf=100, l2_regularization=1.0,
+                         early_stopping=True, random_state=42))])
+    pipe.fit(X_train, y_train)
+    auc = roc_auc_score(y_test, pipe.predict_proba(X_test)[:, 1])
+
+    # Refit on full data for the deployed predictor
+    pipe.fit(X, y)
+    return pipe, auc
+
 
 # ── Plotly theme — matches HSR base_layout ────────────────────────────────────
 PLOT_BG    = "#ffffff"
@@ -450,11 +496,12 @@ st.markdown('<p class="kicker">Shot-level xP model measuring how often teams and
 st.divider()
 
 # ── Tabs ────────────────────────────────────────────────────────────────────────
-tab0, tab_player, tab_shoot, tab_team = st.tabs([
+tab0, tab_player, tab_shoot, tab_team, tab_model = st.tabs([
     "📈  xP Performance",
     "👤  Player Stats",
     "📊  Shooting Stats",
     "🏀  Team Stats",
+    "🎯  Model",
 ])
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -983,6 +1030,108 @@ with tab_player:
             st.plotly_chart(hbar(top_df,"FULL NAME",col,title,
                                  color=color, height=360, ascending=True, pct=(col in PCT_COLS)),
                             width='stretch')
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TAB_TEMP_MODEL · MODEL
+# ═══════════════════════════════════════════════════════════════════════════════
+with tab_model:
+
+    st.markdown("### Shot-make probability calculator")
+    st.markdown('<p class="kicker">Set the shot situation; the gradient-boosting model returns the '
+                'calibrated make probability, converted to expected points (xP).</p>',
+                unsafe_allow_html=True)
+
+    if not MODEL_FEATS:
+        st.warning("None of the expected shot columns (BASIC_ZONE, ZONE_RANGE, ZONE_NAME, "
+                   "ACTION_TYPE, QUARTER) were found in the shots data — the model can't be trained.")
+        st.stop()
+
+    model, model_auc = get_shot_model(shots, MODEL_CAT, MODEL_NUM)
+
+    league_fg_pct = shots["EVENT_TYPE"].str.lower().str.contains("made").mean() * 100
+
+    mk1, mk2, mk3 = st.columns(3)
+    mk1.metric("Model ROC-AUC", f"{model_auc:.2f}", help="Held out 20% test split")
+    mk2.metric("Training shots", f"{len(shots):,}")
+    mk3.metric("League FG%", f"{league_fg_pct:.1f}%")
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    st.divider()
+
+    cfg, out = st.columns([1.25, 1])
+    with cfg:
+        st.markdown('<p class="eyebrow" style="margin:0 0 4px;">Shot location</p>', unsafe_allow_html=True)
+        a, b = st.columns(2)
+        basic_zone_val = None
+        if "BASIC_ZONE" in MODEL_CAT:
+            basic_zone_opts = sorted(shots["BASIC_ZONE"].dropna().unique().tolist())
+            basic_zone_val = a.selectbox("Basic zone", basic_zone_opts)
+        zone_range_val = None
+        if "ZONE_RANGE" in MODEL_CAT:
+            zone_range_opts = sorted(shots["ZONE_RANGE"].dropna().unique().tolist())
+            zone_range_val = b.selectbox("Zone range", zone_range_opts)
+
+        zone_name_val = None
+        if "ZONE_NAME" in MODEL_CAT:
+            zone_name_opts = sorted(shots["ZONE_NAME"].dropna().unique().tolist())
+            zone_name_val = a.selectbox("Zone", zone_name_opts)
+        action_type_val = None
+        if "ACTION_TYPE" in MODEL_CAT:
+            action_type_opts = sorted(shots["ACTION_TYPE"].dropna().unique().tolist())
+            action_type_val = b.selectbox("Shot action type", action_type_opts)
+
+        quarter_val = None
+        if "QUARTER" in MODEL_NUM:
+            q_min = int(shots["QUARTER"].min())
+            q_max = int(shots["QUARTER"].max())
+            quarter_val = st.slider("Quarter", q_min, q_max, min(q_min + 1, q_max))
+
+        pt_value = infer_point_value(basic_zone_val) if basic_zone_val is not None else 2
+        st.markdown(f'<p class="caption" style="font-family:Inter;font-size:12px;color:#888;">'
+                    f'Detected as a <strong>{pt_value}-point</strong> attempt based on zone.</p>',
+                    unsafe_allow_html=True)
+
+    row = {}
+    if "BASIC_ZONE" in MODEL_CAT: row["BASIC_ZONE"] = basic_zone_val
+    if "ZONE_RANGE" in MODEL_CAT: row["ZONE_RANGE"] = zone_range_val
+    if "ZONE_NAME" in MODEL_CAT: row["ZONE_NAME"] = zone_name_val
+    if "ACTION_TYPE" in MODEL_CAT: row["ACTION_TYPE"] = action_type_val
+    if "QUARTER" in MODEL_NUM: row["QUARTER"] = quarter_val
+
+    prob = float(model.predict_proba(pd.DataFrame([row])[MODEL_FEATS])[:, 1][0])
+    xp_value = prob * pt_value
+    lift = prob / (league_fg_pct / 100) if league_fg_pct else 1.0
+
+    with out:
+        st.markdown('<p class="eyebrow" style="margin-bottom:6px;">Predicted expected points</p>',
+                    unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background:#f0f0ee;border-left:3px solid {ACCENT};padding:16px 18px;">
+            <p style="font-family:'Source Serif 4',serif;font-size:44px;font-weight:600;
+                      color:{ACCENT};margin:0;line-height:1;">{xp_value:.2f} xP</p>
+            <p style="font-family:Inter;font-size:12px;color:#666;margin:6px 0 0 0;">
+               {prob*100:.1f}% make probability on a {pt_value}-pt attempt · {lift:.1f}× the league
+               average FG% of {league_fg_pct:.1f}%</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        fig_g = go.Figure(go.Bar(
+            x=[prob*100], y=[""], orientation="h",
+            marker=dict(color=ACCENT, opacity=0.9),
+            hovertemplate="%{x:.1f}%<extra></extra>"))
+        fig_g.add_vline(x=league_fg_pct, line=dict(color="#999", width=1.2, dash="dash"),
+                        annotation_text="league FG%", annotation_position="top",
+                        annotation_font=dict(size=9, color="#888"))
+        fig_g.update_layout(**base_layout(height=120,
+                            xaxis=dict(title="make probability (%)", range=[0, max(12, prob*100*1.25)]),
+                            yaxis=dict(showticklabels=False)))
+        fig_g.update_layout(margin=dict(l=10, r=20, t=30, b=40))
+        st.plotly_chart(fig_g, width='stretch')
+
+        st.markdown('<p style="font-family:Inter;font-size:12px;color:#888;">'
+                    'Biggest levers are typically shot zone and action type. Swap zones to see '
+                    'how much of a shot\'s value comes from location vs. shot selection.</p>',
+                    unsafe_allow_html=True)
 
 # ── Footer ─────────────────────────────────────────────────────────────────────
 st.divider()
