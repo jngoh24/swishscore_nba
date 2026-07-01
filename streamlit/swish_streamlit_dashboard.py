@@ -226,12 +226,15 @@ def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, p
         else [[0,"#fde8e8"],[1,RED]],
         norm.tolist()
     )
-    # Pad the x-axis range so outside-positioned labels never clip against the plot edge
+    # Pad only the far edge (where labels sit) — leave the zero/baseline side untouched
+    # so bars still start flush against the axis like before.
     lo = min(d[x_col].min(), 0)
     hi = max(d[x_col].max(), 0)
     span = (hi - lo) if hi != lo else (abs(hi) or 1)
     pad = span * 0.18
-    x_range = [lo - pad, hi + pad]
+    lo_pad = pad if lo < 0 else 0
+    hi_pad = pad if hi > 0 else 0
+    x_range = [lo - lo_pad, hi + hi_pad]
 
     fig = go.Figure(go.Bar(
         x=d[x_col], y=d[y_col], orientation="h",
