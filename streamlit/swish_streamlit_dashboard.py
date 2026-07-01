@@ -253,6 +253,42 @@ def hbar(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, p
     ))
     return fig
 
+def diverging_bar(df_in, y_col, x_col, title, height=420, top_n=20, pct=False):
+    # Shows the top_n//2 lowest and top_n//2 highest values, centered on a zero baseline.
+    # Pass a deviation-from-average column as x_col — negative = below average, positive = above.
+    half = top_n // 2
+    d_best  = df_in.nsmallest(half, x_col)
+    d_worst = df_in.nlargest(half, x_col)
+    d = pd.concat([d_best, d_worst]).drop_duplicates(subset=[y_col]).sort_values(x_col, ascending=True)
+    suffix = "%" if pct else ""
+    colors = [GREEN if v <= 0 else RED for v in d[x_col]]
+
+    lo = min(d[x_col].min(), 0)
+    hi = max(d[x_col].max(), 0)
+    span = (hi - lo) if hi != lo else (abs(hi) or 1)
+    pad = span * 0.18
+    lo_pad = pad if lo < 0 else 0
+    hi_pad = pad if hi > 0 else 0
+
+    fig = go.Figure(go.Bar(
+        x=d[x_col], y=d[y_col], orientation="h",
+        marker=dict(color=colors, line=dict(width=0), opacity=0.85),
+        text=[f"{'+' if v >= 0 else ''}{v:.1f}{suffix}" for v in d[x_col]],
+        textposition="outside",
+        cliponaxis=False,
+        textfont=dict(size=10, color="#444"),
+        hovertemplate=f"%{{y}}: %{{x:.1f}}{suffix}<extra></extra>",
+    ))
+    fig.update_layout(**base_layout(title, height=height,
+        yaxis=dict(gridcolor=GRID_COLOR, showline=False, zeroline=False,
+                   autorange="reversed", tickfont=dict(size=10)),
+        xaxis=dict(gridcolor=GRID_COLOR, showline=True, zeroline=True,
+                   zerolinecolor="#cccccc", zerolinewidth=1.5,
+                   tickfont=dict(size=10), range=[lo - lo_pad, hi + hi_pad]),
+        margin=dict(l=50, r=40, t=44, b=40),
+    ))
+    return fig
+
 def lollipop(df_in, y_col, x_col, title, color=ACCENT, height=380, ascending=True, pct=False):
     d = df_in.sort_values(x_col, ascending=ascending)
     suffix = "%" if pct else ""
@@ -313,7 +349,8 @@ def vbar(df_in, x_col, y_col, title, color=ACCENT, height=320):
     ))
     return fig
 
-def scatter_chart(df_in, x_col, y_col, name_col, title, color=ACCENT, height=420):
+def scatter_chart(df_in, x_col, y_col, name_col, title, color=ACCENT, height=420,
+                   quadrant=False, quadrant_labels=None):
     fig = px.scatter(df_in, x=x_col, y=y_col, text=name_col, height=height,
                      color=y_col,
                      color_continuous_scale=[[0,"#ddeeff"],[0.5,ACCENT],[1,GREEN]])
@@ -330,6 +367,24 @@ def scatter_chart(df_in, x_col, y_col, name_col, title, color=ACCENT, height=420
                    title=dict(text=y_col, font=dict(size=11, color="#888")),
                    tickfont=dict(size=10)),
     ))
+    if quadrant:
+        avg_x = df_in[x_col].mean()
+        avg_y = df_in[y_col].mean()
+        fig.add_vline(x=avg_x, line_dash="dash", line_color="#c3c2b7", line_width=1)
+        fig.add_hline(y=avg_y, line_dash="dash", line_color="#c3c2b7", line_width=1)
+        if quadrant_labels:
+            fig.add_annotation(
+                x=df_in[x_col].min(), y=df_in[y_col].min(),
+                text=quadrant_labels.get("best", ""), showarrow=False,
+                font=dict(size=10, color=GREEN, family="Inter"),
+                xanchor="left", yanchor="bottom", xshift=4, yshift=4,
+            )
+            fig.add_annotation(
+                x=df_in[x_col].max(), y=df_in[y_col].max(),
+                text=quadrant_labels.get("worst", ""), showarrow=False,
+                font=dict(size=10, color=RED, family="Inter"),
+                xanchor="right", yanchor="top", xshift=-4, yshift=-4,
+            )
     return fig
 
 def agg_top(df_in, col, top_n=10):
@@ -659,10 +714,15 @@ with tab_team:
     top10_shots.columns = ["TEAM_NAME","count"]
     bot10_shots = shots["TEAM_NAME"].value_counts().tail(10).reset_index()
     bot10_shots.columns = ["TEAM_NAME","count"]
+
+    all_teams_df = teams[["TEAM","oPPG","dEFF"]].drop_duplicates()
+    avg_oppg = all_teams_df["oPPG"].mean()
+    avg_deff = all_teams_df["dEFF"].mean()
+    all_teams_df["oppg_dev"] = (all_teams_df["oPPG"] - avg_oppg).round(1)
+    all_teams_df["deff_dev"] = (all_teams_df["dEFF"] - avg_deff).round(1)
+
     top10_oppg  = teams[["TEAM","oPPG"]].drop_duplicates().sort_values("oPPG").head(10)
     top10_deff  = teams[["TEAM","dEFF"]].drop_duplicates().sort_values("dEFF").head(10)
-    bot10_oppg  = teams[["TEAM","oPPG"]].drop_duplicates().sort_values("oPPG",ascending=False).head(10)
-    bot10_deff  = teams[["TEAM","dEFF"]].drop_duplicates().sort_values("dEFF",ascending=False).head(10)
 
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Most attempts",  f"{top10_shots['count'].iloc[0]:,}",  top10_shots['TEAM_NAME'].iloc[0])
@@ -683,24 +743,24 @@ with tab_team:
 
     st.divider()
     section("Defensive Efficiency")
+    st.markdown('<p class="kicker">Deviation from league average — green beats the average, red trails it. Top 10 best and worst shown.</p>', unsafe_allow_html=True)
     c3, c4 = st.columns(2)
     with c3:
-        st.plotly_chart(hbar(top10_oppg,"TEAM","oPPG","Best defensive oPPG (lower = better)",
-                             color=GREEN, height=360, ascending=True), width='stretch')
-        st.plotly_chart(hbar(bot10_oppg,"TEAM","oPPG","Worst defensive oPPG",
-                             color=RED, height=360, ascending=False), width='stretch')
+        st.plotly_chart(diverging_bar(all_teams_df, "TEAM", "oppg_dev",
+                                      "Team oPPG vs league average (lower = better)",
+                                      height=560, top_n=20), width='stretch')
     with c4:
-        st.plotly_chart(hbar(top10_deff,"TEAM","dEFF","Best defensive efficiency (dEFF)",
-                             color=GREEN, height=360, ascending=True), width='stretch')
-        st.plotly_chart(hbar(bot10_deff,"TEAM","dEFF","Worst defensive efficiency (dEFF)",
-                             color=RED, height=360, ascending=False), width='stretch')
+        st.plotly_chart(diverging_bar(all_teams_df, "TEAM", "deff_dev",
+                                      "Team dEFF vs league average (lower = better)",
+                                      height=560, top_n=20), width='stretch')
 
     st.divider()
     section("Defensive Profile — oPPG vs dEFF")
-    all_teams_df = teams[["TEAM","oPPG","dEFF"]].drop_duplicates()
     st.plotly_chart(scatter_chart(all_teams_df,"oPPG","dEFF","TEAM",
                                   "Team defensive profile — oPPG allowed vs defensive efficiency",
-                                  height=480), width='stretch')
+                                  height=480, quadrant=True,
+                                  quadrant_labels={"best":"Elite both ends","worst":"Weak both ends"}),
+                    width='stretch')
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB_TEMP_PLAYER · PLAYER STATS
